@@ -17,7 +17,7 @@ A fast, mobile-first fantasy and gaming name generator. Plain HTML, CSS, and Jav
 
 Drop the whole `nameforge` folder onto any static host (Vercel, Cloudflare Pages, Netlify, GitHub Pages, S3+CloudFront, plain Apache, plain nginx). No build, no install, no env vars.
 
-When you deploy, replace `nameforge.example` in the meta tags, canonical URLs, sitemap.xml, and robots.txt with your real domain.
+When you deploy, replace `nameswiftgenerator.com` in the meta tags, canonical URLs, sitemap.xml, and robots.txt with your real domain.
 
 ## Adding AdSense
 

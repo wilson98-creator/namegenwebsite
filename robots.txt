@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://nameforge.example/sitemap.xml
+Sitemap: https://nameswiftgenerator.com/sitemap.xml
