@@ -1,0 +1,32 @@
+# =============================================================
+# Cloudflare Pages _headers file
+# https://developers.cloudflare.com/pages/configuration/headers/
+# =============================================================
+
+# Security headers — applied to every response
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: interest-cohort=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
+# HTML — always revalidate so deploys are picked up immediately
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Static assets — fingerprint-safe, cache for a year
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Favicon and SVG assets
+/*.svg
+  Cache-Control: public, max-age=86400
+/favicon*
+  Cache-Control: public, max-age=86400
+
+# SEO files — cache for a day
+/sitemap.xml
+  Cache-Control: public, max-age=86400
+/robots.txt
+  Cache-Control: public, max-age=86400
