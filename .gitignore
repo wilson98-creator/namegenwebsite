@@ -1,0 +1,39 @@
+# OS junk
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Editor / IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Build / tooling helpers
+node_modules/
+*.log
+npm-debug.log*
+
+# Internal helper scripts (not part of the deployed site)
+debug.js
+fonts.js
+fonts2.js
+fonts3.js
+logo.js
+rename.js
+rename2.js
+update-content.js
+
+# Secrets / keys
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+deploy_key*
+nameforge_deploy*
+
+# Local config
+.env
+.env.local
