@@ -1,106 +1,306 @@
 /* build-handle.js
    Build:
-   - handle-generator.html (quiz-style social handle generator)
+   - handle-generator.html (realistic-name handle generator)
    - best-gaming-names.html (SEO content page)
    - instagram-username-ideas.html (SEO content page)
    - Update index.html (add new tiles to homepage grid)
    - Update sitemap.xml (add new URLs)
-   - Add cross-links to existing pages
 */
 const fs = require('fs');
 const path = require('path');
 
 // =============================================================
-// DATA: Syllable banks for handle generation
+// DATA: Realistic syllable banks
+//   Every bank is curated to look like names real people actually
+//   use on Instagram, TikTok, YouTube, X, Twitch, Discord, GitHub.
+//   No fantasy combat adjectives. No "voidslayer". Just first names,
+//   activity verbs, real niche nouns, and aesthetic objects.
 // =============================================================
+
+// Realistic short first names (3-6 letters, easy to type)
+const NAMES_F = ['maya','nora','lena','aria','sofia','mia','ella','ivy','sage','luna','ruby','iris','sienna','olive','wren','june','rosie','gem','faye','lou','rae','ada','chloe','amy','jade','opal','hazel','lila','mila','noa','eve','finn','tess','jess','hannah','anna','mara','lila','mira','cleo','nova','zoe','kai','liv','ada'];
+const NAMES_M = ['max','kai','jay','lev','zane','rio','ash','sam','jett','jax','ty','noah','axel','ezra','theo','remy','nico','ari','sage','finn','dan','ben','tom','rob','leo','cy','drew','matt','chris','eli','lou','jude','rhys','rowan','kit','reid','dean','milo','theo','oliver','liam','luke','owen','cole','reed','dane','seth','cam'];
+const NAMES_N = ['max','kai','jay','lev','zane','rio','ash','sam','jett','jax','ty','noah','axel','ezra','theo','remy','nico','ari','sage','finn','maya','nora','lena','aria','sofia','mia','ella','luna','ruby','iris','olive','lou','rae','chloe','tess','jess','hannah','cleo','nova','liv'];
+
+// Realistic small numbers that don't look like a default password
+const SMALL_NUMS = ['04','05','07','09','10','11','12','22','23','24','95','96','97','98','99','00','01','02','03'];
+
+// Cross-niche mood adjectives (used in mood.object patterns)
+const MOODS = ['soft','quiet','calm','slow','raw','wild','dark','deep','low','dim','faded','pale','bold','loud','pure','true','lone','lost','cold','cool','warm','hot','bright','clear','fresh','tiny','mini','little','wee','mid','open','free','still','smooth','mellow','dusty','foggy','cloudy','hazy','sunny','crimson','scarlet','indigo','violet','velvet','silken','linen','cotton','paper','stone','wooden','iron','golden','silver','bronze','copper'];
+
+// Cross-niche aesthetic objects
+const OBJECTS = ['moon','sun','star','sky','cloud','sea','ocean','wave','dune','mist','haze','dust','bloom','petal','rose','lily','sage','fern','moss','vine','leaf','wood','ivory','blush','peach','coral','jade','ink','paper','notes','diary','frame','frame','silk','linen','dusk','dawn','horizon','echo','flame','fire','spark','beam','glow','ghost','fox','fawn','dove','swan','cat','bear','wolf','bee','owl','moth','wave','tide','reef','stone','pebble','pearl','opal','ruby','diamond','amber','marble','porcelain','glass','crystal','plush','velvet','satin','lace','ribbon','thread','needle','pin','key','door','window','mirror','shadow','light','sunset','sunrise','midnight','noon','winter','spring','summer','autumn','rain','snow','frost','dew','hum','hum','hum'];
+
 const niches = {
-  gaming: {
-    label: 'Gaming',
-    words: ['shadow','dark','void','ghost','ace','venom','fury','nexus','rune','storm','blade','fang','claw','hex','grim','crypt','demon','pulse','phantom','wraith','howl','echo','surge','reign','sovereign','clash','iron','bone','shade','mist','toxic','savage','feral','smoke','ember','ash','steel','crimson','dire','grim','cruel','wild','silent','arcane','royal','venom','nether'],
-    suffixes: ['slayer','hunter','rage','shot','kill','aim','frag','blood','clash','surge','rider','master','knight','lord','king','reaper','warlord','demon','beast','wolf','sage','seer','rune','mancer','walker','stalker','prowler','fury','blade','fang','eye','grip','mantle','howl','shade','fang']
-  },
-  tech: {
-    label: 'Tech',
-    words: ['pixel','byte','cyber','dev','code','data','cloud','net','ai','stack','logic','binary','quantum','node','frame','loop','async','compile','kernel','thread','stream','cache','debug','merge','patch','commit','fork','push','pull','hack','trace','lambda','function','script','cipher','compute','render','neural','vector','matrix','reactor','core','sys','daemon','root'],
-    suffixes: ['hub','lab','forge','stack','ops','wave','mind','sync','flow','core','base','mode','loop','grid','net','system','engine','protocol','kernel','node','lab','forge','dev','ops','core','stack','io','api']
-  },
   fashion: {
     label: 'Fashion',
-    words: ['velvet','silk','gold','blush','mode','luxe','style','noir','rose','pearl','ivory','onyx','crystal','amber','jade','coral','ruby','satin','lace','cashmere','cream','bone','sand','stone','clay','indigo','midnight','champagne','dusk','dawn','pearl','crystal','lilac','ivory','scarlet'],
-    suffixes: ['couture','atelier','style','mode','chic','luxe','vogue','label','edition','drop','collection','couture','style','mode','studio','maison','house']
+    names: NAMES_F,
+    activities: ['wears','styles','pairs','drapes','tailors','curates','layers','threads','sews','stitches','dresses','pairs'],
+    adjectives: ['soft','wild','quiet','raw','clean','minimal','classic','vintage','modern','sleek','sharp','polished','refined','understated','tailored','fitted','oversized','cropped','denim','silken','linen','cotton','knit','leather','camel','monochrome','earthy','muted','pastel','bright','bold'],
+    objects: ['silk','linen','denim','leather','cotton','wool','cashmere','velvet','satin','lace','pleat','seam','hem','collar','button','pocket','suit','blazer','coat','dress','skirt','top','shirt','pants','jeans','tee','cardigan','sweater','boot','heel','sneaker','loafer','bag','tote','belt','scarf','hat','cap','glove','ring','necklace','earring','watch','bag','clutch','crossbody','mini','midi','maxi','crop','oversized','tailored','fitted','pleated','cuffed','slouchy','drape','gown','suit','sundress','wrap','kimono','robe','pajama'],
+    nicheWords: ['style','looks','drobe','fits','outfits','fashion','wear','closet','wardrobe','attire','ensemble','aesthetic','vibe','mood','edit','drop','collection','line','pieces']
   },
   beauty: {
     label: 'Beauty',
-    words: ['glow','blush','petal','rose','bloom','sheen','dew','silk','pearl','lush','soft','velvet','cream','satin','cloud','moon','sun','star','daisy','lily','luna','sol','dahlia','violet','rose','iris','jade','opal','pearl','amber'],
-    suffixes: ['glow','beauty','skin','ritual','balm','luxe','ritual','drop','edit','studio','ritual','bar','bar','bar','bar']
+    names: NAMES_F,
+    activities: ['glows','shines','shimmers','blushes','moisturizes','applies','curates','routines','layers','blends','swatches','reviews','tests','tries'],
+    adjectives: ['soft','dewy','matte','glossy','natural','clean','gentle','calm','fresh','bright','luminous','flawless','radiant','effortless','glassy','satin','sleek','bold','subtle','neutral','rosy','bronzed','sun-kissed','clean','clinical','gentle'],
+    objects: ['skin','face','eyes','lips','brows','lashes','cheeks','pores','glow','sheen','dew','flush','shimmer','gloss','balm','serum','toner','essence','cream','gel','wash','scrub','mask','peel','oil','mist','spray','sunscreen','spf','retinol','vitamin','acid','peptide','niacinamide','hyaluronic'],
+    nicheWords: ['beauty','skin','glow','routine','ritual','edit','shelfie','vanity','tips','hacks','review','first impression','favorites','empties','fails','wins']
   },
   fitness: {
     label: 'Fitness',
-    words: ['fit','iron','power','lift','beast','grind','peak','blaze','pulse','ripped','swole','raw','crush','hammer','steel','force','drive','core','max','gainz','bulk','cut','shred','tank','mode','beast','alpha','beast','gains','grind','fuel','sweat'],
-    suffixes: ['fit','mode','force','rep','mode','peak','lift','grind','beast','athlete','mode','mode','beast','gains','grind','fuel','mode']
-  },
-  music: {
-    label: 'Music',
-    words: ['sound','beat','wave','bass','drop','audio','amp','treble','tone','echo','note','chord','rhythm','vibe','tempo','groove','mood','vibe','rave','drift','mellow','echo','hush','drip','swell','surge','climax','chill','vibe','echo','lush','synth'],
-    suffixes: ['beat','vibes','wave','sound','audio','mode','mix','drop','frequency','edit','tones','mode','wave','wave','mode','mix']
+    names: NAMES_M,
+    activities: ['lifts','runs','trains','sweats','grinds','climbs','stretches','builds','coaches','pushes','pulls','rows','boxes','jumps','spins','mobility','breathes','flows','recover'],
+    adjectives: ['strong','lean','fit','ripped','shredded','tough','raw','dedicated','consistent','disciplined','focused','gritty','relentless','driven','unbothered','resting','lifting','running','climbing','rowing','hiking','bouldering'],
+    objects: ['gym','weights','barbell','dumbbell','kettlebell','band','treadmill','track','mile','rep','set','lift','squat','bench','deadlift','muscle','gains','sweat','breath','heart','rate','calorie','protein','carb','meal','prep','rest','day','recovery','ice','bath','sauna','stretch','mobility','yoga','pilates','spin','climb','hike','run','race','finish','line'],
+    nicheWords: ['fitness','fit','gym','training','coach','trainer','athlete','sport','reps','sets','cardio','strength','endurance','recovery','wellness','health','life','lifestyle','journey','progress','check-in','shred','bulk','cut','maintain']
   },
   food: {
     label: 'Food',
-    words: ['taste','savor','spice','fresh','kitchen','chef','plate','basil','thyme','ember','saffron','sage','basil','miso','tofu','noodle','ramen','pho','taco','salsa','taste','yum','drool','morsel','feast','spice','dumpling','pasta','pizza','basil','sour','sweet','bitter','umami'],
-    suffixes: ['kitchen','taste','plate','dish','fork','palate','feast','bite','edit','chef','bites','table','bistro','eats','kitchen','cook']
+    names: NAMES_N,
+    activities: ['cooks','bakes','eats','grills','roasts','plates','sips','pours','mixes','chops','simmers','sautees','whisks','kneads','ferments','picks','harvests','serves','shares','tries','reviews','rates','noms','devours'],
+    adjectives: ['homemade','fresh','crispy','creamy','spicy','sweet','savory','tangy','smoky','rich','buttery','tender','crunchy','golden','slow','quick','easy','everyday','weekend','midnight','rainy','sunday','summer','winter','fall','spring','cozy','simple'],
+    objects: ['kitchen','plate','bowl','pot','pan','oven','stove','knife','board','spoon','fork','whisk','spatula','recipe','ingredient','spice','herb','flour','sugar','salt','butter','oil','vinegar','honey','lemon','garlic','onion','tomato','cheese','cream','milk','yogurt','egg','chicken','beef','pork','fish','tofu','rice','pasta','noodle','bread','cake','cookie','pie','tart','brownie','latte','coffee','matcha','tea','wine','cocktail','mocktail','lemonade','smoothie','juice','water'],
+    nicheWords: ['food','kitchen','cook','bake','eat','recipe','meal','dish','dinner','lunch','breakfast','snack','dessert','feast','bite','sips','serves','cookbook','cuisine','flavor','taste','homemade','fresh','whole','plantbased','vegan','vegetarian','keto','glutenfree','dairyfree','sugarfree','lowcarb','highprotein','spicy','sweet','savory','comfort','healthy','junk','street','home','weeknight']
   },
   travel: {
     label: 'Travel',
-    words: ['wander','roam','atlas','journey','wayfarer','compass','drift','far','beyond','globe','nomad','drifter','pilgrim','explorer','sojourner','vagabond','wayfarer','trekker','voyager','rover','hiker','ranger','trailblazer','pathfinder','scout','cartographer','compass','north','south','east','west','sunrise','sunset','dusk','dawn'],
-    suffixes: ['trip','voyage','atlas','trail','trek','roam','escape','passport','compass','trails','roam','mile','quest','journey','sojourn']
+    names: NAMES_N,
+    activities: ['travels','roams','wanders','explores','discovers','journeys','backpacks','treks','hikes','drives','flies','sails','navigates','passports','visas','commutes','moves','visits','stays','lives'],
+    adjectives: ['slow','solo','digital','remote','budget','luxury','epic','endless','wild','free','nomad','minimal','curious','adventurous','local','hidden','offbeat','popular','crowded','empty','sunny','rainy','misty','snowy','windy','warm','cold','cool','hot','humid','dry'],
+    objects: ['globe','map','compass','passport','ticket','suitcase','backpack','plane','train','bus','car','van','road','trail','path','horizon','sunset','sunrise','view','scenery','landscape','city','town','village','beach','mountain','island','forest','desert','ocean','reef','lake','river','waterfall','cave','temple','church','mosque','cathedral','castle','palace','museum','market','bazaar','cafe','restaurant','bar','hostel','hotel','airbnb','home','couch'],
+    nicheWords: ['travel','trip','journey','adventure','wanderlust','explore','discover','roam','nomad','passport','visa','flight','tour','guide','itinerary','route','destination','city','country','state','local','hidden','offbeat','budget','backpack','solo','remote','digital','workation']
   },
   art: {
     label: 'Art',
-    words: ['ink','brush','canvas','color','sketch','draw','paint','hue','studio','palette','chalk','pastel','watercolor','acrylic','oil','tempera','ink','charcoal','pencil','line','stroke','shade','tone','texture','pattern','form','shape','curve','edge','angle','arc','wave','spiral','dot','point','splash','drip','splash','drip','flow','stroke','line'],
-    suffixes: ['studio','art','ink','canvas','brush','sketch','hue','palette','gallery','atelier','works','studio','studio','muse','mode']
+    names: NAMES_N,
+    activities: ['draws','paints','sketches','creates','illustrates','designs','crafts','carves','prints','inks','colors','textures','patterns','messes','plays','imagines','draws','paints','sculpts','weaves','stitches','embroiders','photographs'],
+    adjectives: ['soft','raw','wild','quiet','bold','delicate','textured','layered','minimal','abstract','surreal','dreamy','vintage','modern','editorial','fine','folk','naive','playful','serious','moody','bright','pale','dark','earthy','saturated','washed','monochrome','multicolor'],
+    objects: ['studio','gallery','canvas','paper','sketchbook','journal','brush','pen','pencil','palette','easel','frame','print','zine','mural','painting','drawing','sketch','sculpture','ceramic','clay','wood','metal','glass','textile','yarn','thread','fabric','paper','collage','print','monotype','litho','screenprint','engraving','etching','watercolor','gouache','acrylic','oil','pastel','charcoal','graphite','ink','marker','highlighter','color','hue','shade','tone','tint','wash','glaze','texture','pattern','line','curve','shape','form','figure','portrait','landscape','still','life','abstract','realism','surrealism','minimalism','maximalism','expressionism','impressionism','art','design','illustration','animation','comic','manga','graphic','poster','logo','type','lettering','typography'],
+    nicheWords: ['art','draw','paint','sketch','create','make','craft','design','illustrate','studio','gallery','museum','exhibition','show','opening','collection','series','work','piece','daily','practice','study','pleinair','figure','portrait','landscape','abstract','realism','concept','commission','piece','drop','print','original','limited','edition','open','edition']
+  },
+  music: {
+    label: 'Music',
+    names: NAMES_N,
+    activities: ['plays','sings','mixes','produces','records','samples','loops','jams','covers','remixes','composes','writes','performs','streams','releases','drops','spins','decks','cuts','scratches'],
+    adjectives: ['loud','soft','raw','smooth','mellow','dark','bright','warm','cold','clean','heavy','dreamy','noisy','quiet','chill','hypnotic','catchy','gritty','distorted','reverbed','lofi','hifi','analog','digital','live','studio','acoustic','electric','unplugged','plugged'],
+    objects: ['sound','beat','tune','note','chord','rhythm','vibe','mood','frequency','wave','amp','speaker','mic','headphone','vinyl','tape','cassette','cd','mix','track','song','album','ep','single','set','show','gig','session','concert','tour','stage','stage','room','studio','bedroom','basement','garage','attic','rooftop','radio','playlist','crate','set','b2b','back2back','opening','headline','closer','encore','intermission','soundcheck','loadin','loadout'],
+    nicheWords: ['music','sound','beat','tune','song','track','album','ep','single','remix','cover','acoustic','electric','live','session','concert','show','gig','tour','open','mic','jam','beat','tape','producer','singer','songwriter','vocalist','instrumentalist','dj','band','artist','musician','sound','audio','frequency','wave','analog','digital','vintage','modern','experimental','underground','mainstream','indie','alt','pop','rock','rap','hiphop','rnb','soul','jazz','blues','folk','country','electronic','house','techno','trance','drum','bass','dubstep','trap','lofi','synthwave','ambient','classical','opera','choir','acoustic','unplugged','live','studio','bedroom','lofi','chill','study','workout','party']
+  },
+  photo: {
+    label: 'Photography',
+    names: NAMES_N,
+    activities: ['shoots','snaps','frames','captures','develops','prints','scans','edits','curates','archives','exhibits','publishes','reviews','tries','films','clicks','captures','sees','frames','composes'],
+    adjectives: ['soft','sharp','raw','moody','dreamy','vintage','analog','natural','available','golden','blue','rim','back','front','high','low','key','fill','hard','diffused','cinematic','editorial','documentary','street','portrait','landscape','fine','commercial','lifestyle','wedding','event','travel','nature','urban','rural','suburban','indoor','outdoor','studio','location','natural','available','mixed','warm','cool','neutral','vibrant','muted','desaturated','saturated','high','low','contrast','high','low','key','midtone','shadow','highlight','detail','grainy','smooth','textured','blurry','sharp','tack','crisp'],
+    objects: ['lens','camera','film','frame','shot','print','negative','slide','scan','lightroom','darkroom','gallery','exhibition','zine','book','mood','light','shadow','color','grain','contrast','highlight','shadow','midtone','curve','grade','lens','prime','zoom','wide','tele','macro','fisheye','tilt','shift','filter','hood','cap','strap','bag','tripod','monopod','gimbal','drone','steadicam','ringlight','softbox','beauty','dish','umbrella','reflector','flag','gel','diffuser','bounce','gobo','background','seamless','backdrop','shoot','session','booking','client','gallery','proof','album','wedding','portrait','family','maternity','newborn','kid','pet','product','commercial','editorial','fashion','beauty','lifestyle','travel','food','architecture','interior','exterior','street','documentary','landscape','nature','wildlife','sports','event','concert','party','portrait','selfie','self','portrait'],
+    nicheWords: ['photo','photography','film','analog','digital','lens','camera','shoot','snap','frame','shot','print','gallery','exhibition','zine','book','editorial','fine','art','commercial','lifestyle','travel','street','documentary','portrait','landscape','nature','wedding','maternity','family','kid','pet','product','food','architecture','interior','urban','rural','35mm','medium','format','large','format','instant','polaroid','cinestill','portra','ektar','tri-x','hp5','delta','trix','fp4','ilford','kodak','fuji','canon','nikon','sony','leica','fujifilm','hasselblad','mamiya','pentax','olympus','panasonic','sigma','tamron','zeiss','voigtlander','voigt','voigtlander','voigt','voigtlander']
+  },
+  tech: {
+    label: 'Tech',
+    names: NAMES_M,
+    activities: ['codes','builds','ships','makes','creates','designs','develops','engineers','debugs','refactors','reviews','mentors','teaches','writes','streams','automates','scripts','tests','commits','merges','deploys','releases','documents','learns','shares'],
+    adjectives: ['lean','clean','elegant','fast','scalable','modular','robust','reliable','simple','minimal','modern','classic','boring','solid','clean','tested','documented','typed','scripted','compiled','interpreted','declarative','imperative','functional','reactive','async','sync','sync','sync'],
+    objects: ['code','stack','build','app','site','web','mobile','tool','lib','library','framework','package','module','function','class','method','api','sdk','cli','ide','editor','terminal','shell','git','repo','branch','commit','pr','merge','deploy','release','version','tag','npm','pip','cargo','brew','docker','kubernetes','vm','container','image','layer','volume','network','port','socket','server','client','request','response','route','endpoint','middleware','handler','controller','model','view','template','component','hook','state','store','context','provider','reducer','action','dispatch','event','emit','listener','promise','async','await','callback','thread','worker','queue','cache','cookie','session','token','jwt','auth','user','admin','dashboard','panel','console','log','error','warn','debug','info','trace','test','spec','unit','integration','e2e','coverage','lint','format','eslint','prettier','ci','cd','pipeline','workflow','runner','build','test','deploy','release','publish','changelog','readme','license','docs','wiki','guide','tutorial','example','demo','sample','boilerplate','starter','template','scaffold','skeleton','seed','fixture','mock','stub','spy','fake'],
+    nicheWords: ['code','dev','build','ship','make','app','site','web','mobile','tool','tech','software','hardware','saas','paas','iaas','b2b','b2c','api','sdk','cli','open','source','closed','source','github','gitlab','bitbucket','vercel','netlify','cloudflare','aws','gcp','azure','digitalocean','heroku','railway','fly','supabase','firebase','postgres','mysql','mongo','redis','graphql','rest','grpc','react','vue','svelte','next','nuxt','remix','astro','solid','preact','qwik','lit','alpine','htmx','tailwind','css','scss','sass','less','postcss','vite','webpack','esbuild','rollup','parcel','swc','babel','tsc','ts','js','jsx','tsx','py','rb','go','rs','java','kt','swift','cs','cpp','c','sql','html','svg','png','jpg','webp','avif','mp4','webm','mov','pdf','md','mdx','txt','json','yaml','toml','xml','csv','tsv','env','gitignore','dockerfile','compose','yaml','yml','toml','json','lock']
+  },
+  gaming: {
+    label: 'Gaming',
+    names: NAMES_M,
+    activities: ['plays','builds','speedruns','streams','clutches','grinds','games','queues','parties','squads','carries','drops','loots','quests','runs','discords'],
+    adjectives: ['casual','tryhard','chill','sweaty','competitive','co-op','solo','duo','squad','5-stack','mid','elo','low','high','bronze','silver','gold','plat','diamond','master','grandmaster','challenger','radiant','immortal','top','bottom','mid','jungle','adc','sup','carry','tank','dps','healer','mage','rogue','warrior','paladin','ranger','monk','druid','warlock','shaman','hunter','priest','berserker','bard','ninja','samurai','pirate','cowboy','knight','lord','king','queen','prince','princess','dragon','phoenix','wolf','fox','hawk','bear','lion','tiger','shark','viper','cobra','mantis','scorpion'],
+    objects: ['controller','headset','keyboard','mouse','setup','rig','monitor','chair','desk','stream','twitch','youtube','discord','tiktok','instagram','twitter','clips','highlight','play','run','speedrun','clutch','ace','team','squad','party','lobby','match','game','round','match','rank','ranked','casual','comp','competitive','elo','lp','mmr','kd','kda','kdr','w','l','win','loss','victory','defeat','pog','gg','ez','gl','hf','nt','ty','gj','wp','f','btw','tbh','imo','imho','lmao','lol','rofl','omg','wtf','sus','ratio','mid','cope','seethe','mald','cringe','based','chad','sigma','alpha','beta','omega','introvert','extrovert','ambivert'],
+    nicheWords: ['gaming','gamer','plays','streams','twitch','streamer','youtube','content','clips','highlights','speedrun','ranked','casual','comp','clutch','squad','party','match','game','session','controller','keyboard','mouse','setup','rig','setup','gameplay','walkthrough','guide','tips','tutorial','review','first','impression','stream','vod','clip','reel','short','tiktok','youtube','twitch','discord','community','guild','clan','team','squad','party']
   },
   comedy: {
     label: 'Comedy',
-    words: ['lol','haha','pun','quip','snort','gaff','goof','zany','giggle','cackle','chuckle','snicker','titter','guffaw','hoot','cackle','deadpan','dry','witty','silly','goofy','dopey','wacky','nutty','batty','bonkers','cuckoo','daffy','batty','barmy','bats','insane','kooky','loony','mad','nutty','screwy','wacky','whacky','yerk'],
-    suffixes: ['laugh','joke','gag','quip','giggle','pun','haha','lol','lolz','comedy','mode','mode','bit','set','bit']
+    names: NAMES_N,
+    activities: ['jokes','puns','memes','riffs','roasts','sketches','bits','improvs','reacts','tries','reviews','rates','jests','quips','snarks','snarks','snarks'],
+    adjectives: ['funny','lol','lmao','dead','dying','crying','hilarious','cringe','corny','cheesy','dry','deadpan','witty','silly','goofy','dopey','wacky','nutty','batty','bonkers','cuckoo','daffy','barmy','bats','insane','kooky','loony','mad','nutty','screwy','wacky','whacky','awkward','random','chaotic','unhinged','feral','feral','feral'],
+    objects: ['meme','joke','pun','gag','bit','sketch','scene','bit','punchline','setup','punchline','callback','tag','button','laugh','giggle','cackle','snort','snicker','titter','guffaw','hoot','yelp','yike','oof','cringe','sus','mid','ratio','cope','seethe','mald','chad','sigma','based','cringe','cringe','cringe'],
+    nicheWords: ['comedy','funny','lol','joke','pun','meme','bit','sketch','standup','improv','skit','prank','reaction','try','not','try','review','tier','list','ranking','best','worst','funniest','cringe','based','ratio','cope','seethe','mald','chad','sigma','alpha','feral','unhinged','chaotic','random','dnd','tiktok','reel','short','clip','twitter','tweet','thread','story','post','content','creator','artist','writer','director','actor','actress','comedian','host','guest','panel','roast','burn','insult','compliment','backhanded','savage','light','friendly','family','workplace','observational','absurd','surreal','dark','dry','deadpan','witty','silly','goofy','dopey','wacky','nutty','batty','bonkers','cuckoo','daffy','barmy','bats','insane','kooky','loony','mad','nutty','screwy','wacky','whacky','awkward','random','chaotic','unhinged','feral']
   },
   education: {
     label: 'Education',
-    words: ['study','learn','mind','brain','sage','quest','tutor','school','book','scholar','thesis','lecture','prof','academic','university','college','professor','doctor','phd','degree','class','course','lesson','chapter','module','unit','topic','subject','field','discipline','domain','realm','sphere','faculty','professor','graduate','alumnus'],
-    suffixes: ['academy','learn','study','mind','lab','school','sage','scholar','notes','study','class','course','lab','mode','mode']
+    names: NAMES_N,
+    activities: ['teaches','tutors','studies','learns','reads','writes','explains','reviews','tests','quizzes','lectures','presents','shares','simplifies','breaks down','walks through','guides','mentors','coaches','advises'],
+    adjectives: ['simple','clear','easy','quick','deep','thorough','beginner','intermediate','advanced','expert','master','basic','essential','fundamental','introductory','comprehensive','complete','full','crash','speed','fast','slow','visual','auditory','hands-on','practical','theoretical','applied','clinical','academic','scholarly','research','peer','reviewed'],
+    objects: ['lesson','class','course','module','unit','topic','subject','field','domain','realm','sphere','chapter','section','part','piece','lecture','seminar','workshop','tutorial','guide','walkthrough','demo','example','sample','exercise','practice','problem','question','answer','solution','key','tip','trick','hack','shortcut','method','approach','strategy','framework','model','theory','concept','idea','principle','rule','law','formula','equation','proof','theorem','lemma','corollary','definition','axiom','postulate','hypothesis','thesis','argument','counterexample','exception','case','study','survey','review','meta','analysis','synthesis','comparison','contrast','evaluation','assessment','rubric','criteria','standard','benchmark','goal','objective','outcome','result','finding','conclusion','recommendation','suggestion','tip','warning','caution','note','aside','comment','remark','observation','insight','perspective','viewpoint','angle','lens','framework','lens'],
+    nicheWords: ['study','learn','class','course','lesson','tutor','teacher','professor','lecture','school','college','university','academy','institute','education','learning','study','homework','assignment','exam','test','quiz','midterm','final','project','paper','essay','thesis','dissertation','research','reading','writing','math','science','history','english','language','art','music','pe','recess','lunch','cafeteria','library','gym','playground','classroom','desk','chair','board','chalk','marker','pen','pencil','notebook','binder','folder','textbook','workbook','calculator','ruler','compass','protractor','map','globe','atlas','dictionary','thesaurus','encyclopedia','wikipedia','google','youtube','khan','academy','coursera','udemy','edx','skillshare','masterclass','duolingo','quizlet','anki','notion','obsidian','roam','logseq','evernote','onenote','goodnotes','notability','marginnote','reader','books','articles','videos','podcasts','tutorials','courses','lessons','classes','workshops','seminars','lectures','office','hours','study','group','partner','mentor','tutor','coach','advisor','counselor','therapist','doctor','nurse','dentist','optometrist','vet','lawyer','accountant','engineer','architect','designer','developer','programmer','analyst','scientist','researcher','writer','editor','journalist','reporter','anchor','host','producer','director','actor','actress','musician','artist','chef','baker','bartender','barista','server','hostess','manager','owner','founder','ceo','cto','cfo','coo','vp','director','manager','lead','senior','junior','intern','contractor','freelancer','consultant','advisor','expert','specialist','generalist','ninja','rockstar','guru','wizard','master','apprentice','student','graduate','alumnus','alumna','phd','md','jd','mba','ms','ma','ba','bs','aa','as','certification','license','degree','diploma','certificate','award','honor','distinction','magna','cum','laude','suma','cum','laude','dean','list','president','vice','president','secretary','treasurer','board','committee','club','organization','society','association','union','guild','fellowship','fraternity','sorority','team','captain','co-captain','member','officer','leader','follower','supporter','fan','critic','skeptic','optimist','pessimist','realist','idealist','pragmatist','theorist','empiricist','rationalist','romantic','classic','modern','postmodern','ancient','medieval','renaissance','industrial','contemporary','present','future','past','current','recent','old','new','next','first','last','best','worst','most','least','more','less','fewer','many','much','some','any','all','none','every','each','both','either','neither','one','two','three','four','five','six','seven','eight','nine','ten','hundred','thousand','million','billion','trillion','dozen','score','gross','ream','chord','link','chain','tier','level','grade','rank','rate','ratio','proportion','percentage','fraction','decimal','integer','whole','natural','prime','composite','even','odd','positive','negative','zero','null','void','empty','full','half','quarter','third','fourth','fifth','sixth','seventh','eighth','ninth','tenth','hundredth','thousandth','millionth','billionth','trillionth']
   },
   lifestyle: {
     label: 'Lifestyle',
-    words: ['life','vibe','calm','slow','daily','cozy','peaceful','simple','soft','sunny','serene','mindful','gentle','quiet','still','warm','light','easy','free','open','honest','true','real','whole','balanced','centered','present','awake','aware','alive','growing','blooming'],
-    suffixes: ['life','daily','vibe','slow','simple','journal','edit','moment','mindful','edit','life','days','hours','mornings','evenings','days']
+    names: NAMES_N,
+    activities: ['lives','slows','mornings','evenings','days','nights','reads','writes','journals','reflects','practices','breathes','meditates','rests','cooks','cleans','organizes','curates','shares','blooms','grows'],
+    adjectives: ['slow','soft','quiet','calm','cozy','simple','minimal','intentional','mindful','present','awake','aware','alive','balanced','centered','grounded','rooted','wild','free','open','honest','true','real','whole','easy','light','bright','sunny','warm','cool','cold','foggy','misty','rainy','snowy','windy','still','silent','peaceful','serene','tranquil','gentle','tender','caring','kind','patient','grateful','thankful','content','happy','joyful','hopeful','optimistic','curious','playful','fun','clean','fresh','vintage','classic','timeless','enduring','lasting','everyday','modern','digital','analog','unplugged','simple','slow','fast','now','today'],
+    objects: ['morning','evening','night','day','week','weekend','minute','hour','moment','pause','breath','cup','bowl','plate','spoon','mug','book','page','chapter','verse','line','word','note','song','track','album','list','frame','wall','desk','chair','room','home','house','door','window','mirror','candle','lamp','light','plant','leaf','stem','root','bloom','petal','rose','fern','moss','vine','stone','shell','pebble','feather','stick','string','thread','ribbon','knot','bow','box','jar','bottle','tin','bag','tote','pouch','case','cover','blanket','pillow','cushion','mat','rug','towel','soap','brush','comb','water','tea','coffee','matcha','juice','wine','bread','cheese','fruit','honey','butter','salt','sugar','spice','herb','flower'],
+    nicheWords: ['life','live','daily','morning','evening','night','slow','mindful','intentional','simple','cozy','calm','quiet','soft','present','everyday','routine','ritual','habit','practice','journal','reflect','share','bloom','grow','pause','breathe','reset','focus','time','moment']
   },
   business: {
     label: 'Business',
-    words: ['pro','exec','founder','ceo','strategy','growth','scale','lead','capital','agency','partner','venture','startup','studio','lab','group','firm','co','hq','office','desk','board','pitch','deck','brand','market','scale','revenue','profit','margin','bottom','line','top','line','north','star','compass','lever'],
-    suffixes: ['lab','capital','ventures','co','group','partners','agency','strategy','ops','growth','ventures','capital','fund','trust','llc','inc','co','group','co']
+    names: NAMES_M,
+    activities: ['builds','founds','leads','ships','scales','grows','sells','closes','partners','advises','mentors','coaches','consults','plans','executes','operates','manages','directs','funds','invests','launches','releases','sources','produces','delivers','fulfills','supports','serves','helps'],
+    adjectives: ['lean','smart','fast','nimble','agile','scrappy','sustainable','profitable','efficient','productive','effective','impactful','meaningful','purposeful','mission','values','aligned','customer','data','driven','metric','strategic','tactical','operational','execution','delivery','product','growth','revenue','profit','cash','startup','scaleup','enterprise','public','private','bootstrap','funded','seed','series','early','later','global','local','regional','modern','classic','premium','luxury','accessible','inclusive','diverse','sustainable','green','clean','ethical','honest','transparent','open','simple','smart','focused','sharp','precise','clean','reliable','solid','strong','durable','lasting','enduring','proven','tested','trusted','respected','known','loved'],
+    objects: ['startup','company','studio','lab','workshop','agency','firm','group','team','squad','unit','pod','dept','office','hq','base','camp','hub','center','shop','store','market','marketplace','platform','network','community','collective','guild','club','society','association','org','foundation','fund','trust','capital','venture','equity','stake','share','option','grant','partner','founder','ceo','cto','cfo','coo','lead','head','chief','director','manager','senior','junior','intern','contractor','freelancer','consultant','advisor','expert','specialist','generalist','employee','staff','worker','maker','builder','creator','designer','developer','engineer','scientist','researcher','writer','editor','analyst','planner','strategist','marketer','seller','operator','producer','supplier','vendor','client','customer','user','member','subscriber','follower','fan','reader','viewer','listener','player','buyer','seller','trader','broker','agent','rep','ambassador','advocate','evangelist'],
+    nicheWords: ['build','found','lead','ship','scale','grow','sell','partner','advise','mentor','coach','consult','plan','execute','operate','manage','direct','fund','invest','launch','release','source','produce','deliver','fulfill','support','serve','help','startup','scaleup','enterprise','agency','studio','lab','firm','group','team','co','hq','works','collective','club','society','business','brand','company']
   }
 };
 
+// Vibe-driven patterns. Each vibe is a list of {slot} templates
+// that get filled with words from the niche banks.
 const vibes = {
-  cool:    { label: 'Cool',    prefix: ['x','prime','elite','apex','peak','bold','savage','raw','vip','official','pro','ace','zero','king','god','top','pure','rich','ultra'] },
-  pro:     { label: 'Professional', prefix: ['pro','real','certified','premium','signature','true','authentic','genuine','actual','official','proper','solid','reliable'] },
-  funny:   { label: 'Funny',   prefix: ['lol','lmao','dead','yeet','bruh','oof','kek','omg','cringe','sus','pog','chad','based','ratio','mid','npc'] },
-  mystery: { label: 'Mysterious', prefix: ['void','shadow','ghost','phantom','hidden','secret','masked','faceless','null','zero','cipher','enigma','cryptic'] },
-  cute:    { label: 'Cute',    prefix: ['sweet','soft','sunny','cozy','little','mini','tiny','pet','bunny','peach','plush','fluffy','dainty','tiny'] },
-  edgy:    { label: 'Edgy',    prefix: ['dark','void','rage','venom','blood','nightmare','death','hell','doom','grim','cruel','savage','feral','broken'] },
-  chill:   { label: 'Chill',   prefix: ['lofi','lowkey','mellow','smooth','easy','cozy','calm','slow','soft','zen','easy','soft','drift','mellow'] },
-  luxury:  { label: 'Luxury',  prefix: ['gold','royal','luxe','elite','premium','private','bespoke','velvet','silk','crown','diamond','ivory','plush'] }
+  cool: {
+    label: 'Cool',
+    desc: 'short, sharp, two-word combos',
+    patterns: [
+      '{name}{number}',
+      '{name}.{initial}',
+      '{name}_{initial}',
+      '{adjective}{name}',
+      '{name}{adjective}',
+      '{niche_word}{name}',
+      '{name}{niche_word}',
+      '{object}.{object}',
+      '{object}{object}'
+    ]
+  },
+  pro: {
+    label: 'Professional',
+    desc: 'name + role / niche keyword',
+    patterns: [
+      '{name}{activity}',
+      '{activity}{name}',
+      '{niche_word}by{name}',
+      '{niche_word}with{name}',
+      '{name}with{niche_word}',
+      '{name}{niche_word}',
+      '{niche_word}{name}',
+      '{name}official',
+      '{name}hq',
+      '{name}co',
+      '{name}studio',
+      '{name}works',
+      '{name}{niche_word}co',
+      'the{name}{niche_word}',
+      'real{name}'
+    ]
+  },
+  funny: {
+    label: 'Funny',
+    desc: 'silly noun combos',
+    patterns: [
+      '{object}{object}',
+      '{niche_word}{object}',
+      '{object}{niche_word}',
+      'the{name}{object}',
+      '{name}and{name}',
+      '{niche_word}with{name}',
+      '{name}{number}',
+      '{object}_{object}',
+      '{name}.{object}',
+      'big{name}',
+      'lil{name}'
+    ]
+  },
+  mystery: {
+    label: 'Mysterious',
+    desc: 'one short, hard word',
+    patterns: [
+      '{name}',
+      '{name}{number}',
+      '{name}.{initial}',
+      '{adjective}{object}',
+      '{object}{adjective}',
+      '{initial}.{name}',
+      '{name}_{number}',
+      '{name}{initial}{number}'
+    ]
+  },
+  cute: {
+    label: 'Cute',
+    desc: 'soft name + sweet object',
+    patterns: [
+      '{name}{object}',
+      '{object}{name}',
+      '{name}.{object}',
+      '{object}.{name}',
+      '{name}{number}',
+      'lil{name}',
+      'little{name}',
+      '{name}bunny',
+      '{name}pie',
+      '{name}bear',
+      '{name}doll',
+      'sweet{name}',
+      'dear{name}'
+    ]
+  },
+  edgy: {
+    label: 'Edgy',
+    desc: 'raw mood + object',
+    patterns: [
+      '{adjective}{object}',
+      '{object}{adjective}',
+      '{adjective}.{object}',
+      '{object}.{adjective}',
+      'raw{name}',
+      'cold{name}',
+      'dark{name}',
+      'no{name}',
+      '{name}rage',
+      '{name}raw',
+      'not{name}'
+    ]
+  },
+  chill: {
+    label: 'Chill',
+    desc: 'mood + soft object',
+    patterns: [
+      '{mood}{object}',
+      '{object}{mood}',
+      '{mood}.{object}',
+      '{object}.{mood}',
+      '{mood}_{object}',
+      '{name}{mood}',
+      '{mood}{name}',
+      'soft{name}',
+      'slow{name}',
+      'quiet{name}',
+      'still{name}',
+      'calm{name}'
+    ]
+  },
+  luxury: {
+    label: 'Luxury',
+    desc: 'premium name + luxe word',
+    patterns: [
+      '{name}atelier',
+      '{name}maison',
+      '{name}studio',
+      '{name}co',
+      '{name}official',
+      '{name}luxe',
+      '{mood}atelier',
+      '{mood}maison',
+      '{mood}studio',
+      '{mood}co',
+      'the{name}club',
+      'the{name}society',
+      '{name}.gold',
+      '{name}.co'
+    ]
+  }
 };
 
 const platforms = {
-  instagram: { label: 'Instagram', maxLen: 30, separator: '_' },
-  youtube:   { label: 'YouTube',   maxLen: 100, separator: ' ' },
-  tiktok:    { label: 'TikTok',    maxLen: 24, separator: '_' },
-  x:         { label: 'X / Twitter',maxLen: 15, separator: '' },
-  twitch:    { label: 'Twitch',    maxLen: 25, separator: '' },
-  discord:   { label: 'Discord',   maxLen: 32, separator: '' },
-  github:    { label: 'GitHub',    maxLen: 39, separator: '-' },
-  generic:   { label: 'Any social',maxLen: 50, separator: '' }
+  instagram: { label: 'Instagram', maxLen: 30, separator: 'either', allowed: ['.', '_', ''] },
+  youtube:   { label: 'YouTube',   maxLen: 100, separator: 'space', allowed: [' '] },
+  tiktok:    { label: 'TikTok',    maxLen: 24, separator: 'either', allowed: ['.', '_', ''] },
+  x:         { label: 'X / Twitter',maxLen: 15, separator: 'none', allowed: [''] },
+  twitch:    { label: 'Twitch',    maxLen: 25, separator: 'none', allowed: [''] },
+  discord:   { label: 'Discord',   maxLen: 32, separator: 'none', allowed: [''] },
+  github:    { label: 'GitHub',    maxLen: 39, separator: 'dash', allowed: ['-'] },
+  generic:   { label: 'Any social',maxLen: 50, separator: 'either', allowed: ['.', '_', ''] }
 };
 
 // =============================================================
@@ -109,11 +309,13 @@ const platforms = {
 function buildHandleGenerator() {
   const data = {
     defaults: { count: 12 },
-    banks: { niches, vibes, platforms }
+    banks: { niches, vibes, platforms, namesF: NAMES_F, namesM: NAMES_M, namesN: NAMES_N, smallNums: SMALL_NUMS, moods: MOODS, objects: OBJECTS }
   };
+  // JSON.stringify with </script> guard
   const dataJson = JSON.stringify(data, null, 2)
-    .replace(/`/g, '\\`')
-    .replace(/\$/g, '\\$');
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
 
   return `<!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -121,11 +323,11 @@ function buildHandleGenerator() {
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Social Handle Generator - Instagram, YouTube, TikTok, X Username Ideas</title>
-<meta name="description" content="Free social media handle generator for Instagram, YouTube, TikTok, X, Twitch, Discord, and GitHub. Answer 4 quick questions about your channel and get 12 username ideas tailored to your niche and vibe." />
+<meta name="description" content="Free social media handle generator for Instagram, YouTube, TikTok, X, Twitch, Discord, and GitHub. Answer 4 quick questions about your channel and get 12 real username ideas (first name + niche, mood + object, etc.) that people actually use." />
 <meta name="theme-color" content="#0f1115" />
 <link rel="canonical" href="https://nameswiftgenerator.com/handle-generator" />
 <meta property="og:title" content="Social Handle Generator - Instagram, YouTube, TikTok, X" />
-<meta property="og:description" content="Get 12 custom social media username ideas for your channel. Built for creators, gamers, streamers, and indie hackers." />
+<meta property="og:description" content="Get 12 real social media username ideas for your channel. Built for creators, gamers, streamers, and indie hackers." />
 <meta property="og:type" content="website" />
 <link rel="stylesheet" href="assets/css/style.css" />
 <script type="application/ld+json">
@@ -146,13 +348,13 @@ function buildHandleGenerator() {
   "@type": "FAQPage",
   "mainEntity": [
     {"@type": "Question", "name": "How do I come up with a good social media username?",
-     "acceptedAnswer": {"@type": "Answer", "text": "Start with your niche (gaming, tech, beauty, etc), pick a vibe that matches your personality (cool, professional, funny), and combine them into 1-3 short words. Keep it under 15 characters for X/Twitter, under 30 for Instagram, and under 100 for YouTube."}},
+     "acceptedAnswer": {"@type": "Answer", "text": "Start with your first name or nickname. Pick your niche (fashion, beauty, fitness, food, travel, art, music, photography, tech, gaming, comedy, education, lifestyle, business). Combine the two with a common pattern: name + activity (cookingwithsam), name + niche word (miaskincare), mood + object (softbloom), or a small meaningful number (liv_04). Keep it under 15 characters for X, 24 for TikTok, 30 for Instagram."}},
     {"@type": "Question", "name": "How do I check if a username is available?",
-     "acceptedAnswer": {"@type": "Answer", "text": "For Instagram, TikTok, X, and Twitch, just paste your generated handle into the platform's sign-up or search. For YouTube, the handle is the same as your channel name, so check on YouTube. For Discord, the username is separate from the display name."}},
+     "acceptedAnswer": {"@type": "Answer", "text": "For Instagram, TikTok, X, and Twitch, paste your generated handle into the platform's sign-up or search. For YouTube, the handle is the same as your channel name, so check on YouTube. For Discord, the username is separate from the display name."}},
     {"@type": "Question", "name": "Can I use these names commercially?",
      "acceptedAnswer": {"@type": "Answer", "text": "Yes - all generated names are provided for creative use. Note that the actual availability on each platform is determined by the platform's sign-up system, so always verify before launching your account or brand."}},
     {"@type": "Question", "name": "Are these handles likely to be available?",
-     "acceptedAnswer": {"@type": "Answer", "text": "We generate uncommon combinations of niche-specific syllables and vibe modifiers, so most suggestions are likely available. We can't check every platform in real time, so the names show a 'likely available' indicator based on uniqueness, not a live check."}},
+     "acceptedAnswer": {"@type": "Answer", "text": "We generate uncommon combinations of first names, activity verbs, niche keywords, mood adjectives, and aesthetic objects, so most suggestions are likely available. We can't check every platform in real time, so the names show a 'likely available' indicator based on uniqueness, not a live check."}},
     {"@type": "Question", "name": "What's the difference between a handle and a display name?",
      "acceptedAnswer": {"@type": "Answer", "text": "The handle is your unique @username (no spaces, used in URLs and mentions). The display name is the readable name shown next to your posts. You usually set both, and they can be different versions of the same idea."}}
   ]
@@ -187,7 +389,7 @@ function buildHandleGenerator() {
   <section class="hero">
     <div class="container">
       <h1>Social Handle Generator</h1>
-      <p>Get 12 custom social media username ideas for Instagram, YouTube, TikTok, X, Twitch, Discord, and GitHub. Tell us about your channel, pick a vibe, and we'll do the rest.</p>
+      <p>Get 12 real social media username ideas for Instagram, YouTube, TikTok, X, Twitch, Discord, and GitHub. Tell us your name, pick your niche and vibe, and we'll do the rest. Names use the patterns real creators actually pick - first name + niche, mood + object, soft compound words - not random combat syllables.</p>
     </div>
   </section>
 
@@ -223,14 +425,18 @@ function buildHandleGenerator() {
           <div class="handle-field">
             <label for="hf-length">How long should it be?</label>
             <select id="hf-length" name="length">
-              <option value="short">Short (1 word)</option>
-              <option value="medium" selected>Medium (2 words)</option>
-              <option value="long">Long (3+ words)</option>
+              <option value="short">Short (under 10 chars)</option>
+              <option value="medium" selected>Medium (10-18 chars)</option>
+              <option value="long">Long (18+ chars)</option>
             </select>
           </div>
           <div class="handle-field handle-field-wide">
-            <label for="hf-topic">Optional: a specific word to include (e.g. "arcade", "vegan", "espresso")</label>
-            <input id="hf-topic" name="topic" type="text" maxlength="20" placeholder="leave blank to use the auto-generator" />
+            <label for="hf-topic">Optional: a word to include in every name (e.g. "espresso", "arcade", "fern")</label>
+            <input id="hf-topic" name="topic" type="text" maxlength="20" placeholder="leave blank to use first names from our pool" />
+          </div>
+          <div class="handle-field handle-field-wide">
+            <label for="hf-seed">Optional: a first name or nickname to use (e.g. "maya", "max")</label>
+            <input id="hf-seed" name="seed" type="text" maxlength="20" placeholder="leave blank for random first names" />
           </div>
         </div>
         <div class="generate-row" style="margin-top: 18px;">
@@ -248,41 +454,40 @@ function buildHandleGenerator() {
       <h2>How to use this handle generator</h2>
       <ol>
         <li>Pick your platform (Instagram, YouTube, TikTok, X, Twitch, Discord, GitHub, or any social).</li>
-        <li>Tell us what your channel is about (gaming, tech, beauty, fitness, music, food, travel, art, comedy, education, lifestyle, or business).</li>
+        <li>Tell us what your channel is about (fashion, beauty, fitness, food, travel, art, music, photography, tech, gaming, comedy, education, lifestyle, or business).</li>
         <li>Pick the vibe that matches your personality (cool, professional, funny, mysterious, cute, edgy, chill, or luxury).</li>
-        <li>Choose a length - short (1 word), medium (2 words), or long (3+ words).</li>
-        <li>Hit <strong>Generate handles</strong> for 12 fresh username ideas. Or hit <strong>Surprise me</strong> to randomize all four answers.</li>
+        <li>Choose a length - short (under 10 chars), medium (10-18 chars), or long (18+ chars).</li>
+        <li>(Optional) Add a word you want in every name and/or your first name to personalize.</li>
+        <li>Hit <strong>Generate handles</strong> for 12 fresh username ideas. Or hit <strong>Surprise me</strong> to randomize all the answers.</li>
         <li>Tap the copy icon to copy a handle you like, then paste it into your platform to check availability.</li>
       </ol>
 
       <h2>How to pick a great social media username</h2>
-      <p>A good social media handle does three things: it tells people what your content is, it sticks in their head, and it stays available across platforms. This handle generator combines 12 niche categories (gaming, tech, fashion, beauty, fitness, music, food, travel, art, comedy, education, lifestyle, business) with 8 vibes (cool, professional, funny, mysterious, cute, edgy, chill, luxury) to produce uncommon combinations that are likely to be available.</p>
+      <p>A good social media handle does three things: it tells people what your content is, it sticks in their head, and it stays available across platforms. This handle generator combines 14 niche categories with 8 vibes to produce uncommon combinations that are likely to be available.</p>
+      <p>The names use the patterns real creators actually pick: <strong>first name + niche</strong> (e.g. <em>cookingwithsam</em>), <strong>name + activity</strong> (e.g. <em>chef.aria</em>), <strong>mood + object</strong> (e.g. <em>softbloom</em>), <strong>the/hey/its/by/get/try + name</strong> (e.g. <em>heymia</em>), and <strong>name + small meaningful number</strong> (e.g. <em>liv_04</em>). No random combat syllables, no fantasy words.</p>
 
       <h2>Length rules by platform</h2>
       <ul>
         <li><strong>X / Twitter:</strong> 15 characters max. Go with <em>Short</em> or <em>Medium</em>.</li>
         <li><strong>TikTok:</strong> 24 characters max. <em>Short</em> or <em>Medium</em> works best.</li>
-        <li><strong>Instagram:</strong> 30 characters max, allows underscores. <em>Medium</em> is the sweet spot.</li>
+        <li><strong>Instagram:</strong> 30 characters max, allows underscores and periods. <em>Medium</em> is the sweet spot.</li>
         <li><strong>Twitch:</strong> 25 characters max, lowercase only. <em>Short</em> or <em>Medium</em>.</li>
-        <li><strong>YouTube:</strong> 100 characters max, allows spaces. <em>Long</em> is fine here.</li>
+        <li><strong>YouTube:</strong> 100 characters max, allows spaces and capitalisation. <em>Long</em> is fine here.</li>
         <li><strong>Discord:</strong> 32 characters max for the username. <em>Short</em> or <em>Medium</em>.</li>
         <li><strong>GitHub:</strong> 39 characters max, allows hyphens. <em>Medium</em> or <em>Long</em>.</li>
       </ul>
 
-      <h2>Examples by niche</h2>
+      <h2>Real handle patterns by vibe</h2>
       <ul>
-        <li><strong>Gaming:</strong> <span class="example-name">shadowslayer</span>, <span class="example-name">voidwalker</span>, <span class="example-name">xraven</span></li>
-        <li><strong>Tech:</strong> <span class="example-name">pixelhub</span>, <span class="example-name">bytelab</span>, <span class="example-name">apexdev</span></li>
-        <li><strong>Fashion:</strong> <span class="example-name">velvetluxe</span>, <span class="example-name">ivorymode</span>, <span class="example-name">goldcouture</span></li>
-        <li><strong>Fitness:</strong> <span class="example-name">ironbeast</span>, <span class="example-name">peakforce</span>, <span class="example-name">grindmode</span></li>
-        <li><strong>Food:</strong> <span class="example-name">savorkitchen</span>, <span class="example-name">spicefeast</span>, <span class="example-name">freshplate</span></li>
-        <li><strong>Art:</strong> <span class="example-name">inkstudio</span>, <span class="example-name">brushatelier</span>, <span class="example-name">huepalette</span></li>
-        <li><strong>Travel:</strong> <span class="example-name">wanderatlas</span>, <span class="example-name">nomadcompass</span>, <span class="example-name">roamvoyage</span></li>
-        <li><strong>Business:</strong> <span class="example-name">founderco</span>, <span class="example-name">growthcapital</span>, <span class="example-name">strategylab</span></li>
+        <li><strong>Cool</strong> - short and sharp: <em>liv.04</em>, <em>quietkai</em>, <em>nova.dawn</em></li>
+        <li><strong>Professional</strong> - name + role: <em>cookingwithsam</em>, <em>chef.aria</em>, <em>designbymaya</em>, <em>mia.skincare</em></li>
+        <li><strong>Funny</strong> - silly combos: <em>wafflelord</em>, <em>noodlebrain</em>, <em>big.maya</em></li>
+        <li><strong>Mysterious</strong> - one short word: <em>vex</em>, <em>nyx</em>, <em>flux</em>, <em>kai</em></li>
+        <li><strong>Cute</strong> - sweet + name: <em>lunabunny</em>, <em>peachyrose</em>, <em>sweet.olivia</em></li>
+        <li><strong>Edgy</strong> - raw mood + object: <em>rawink</em>, <em>coldsteel</em>, <em>not.maya</em></li>
+        <li><strong>Chill</strong> - soft + object: <em>softbloom</em>, <em>quietcloud</em>, <em>calm.kai</em></li>
+        <li><strong>Luxury</strong> - premium + name: <em>velvetatelier</em>, <em>mia.maison</em>, <em>the.gold.club</em></li>
       </ul>
-
-      <h2>Why combine niche + vibe?</h2>
-      <p>Most handle generators give you one or the other - either random adjectives ("purple", "spicy", "fast") or random nouns ("cat", "ninja", "wizard"). This tool gives you the intersection: niche-relevant words (for a gaming channel, you get words like "void", "shadow", "phantom" - not "purple") crossed with vibe modifiers (cool, funny, luxury). The result is a handle that <em>means</em> something about your content rather than being a random string.</p>
 
       <h2>After you generate a name you like</h2>
       <ol>
@@ -294,13 +499,13 @@ function buildHandleGenerator() {
 
       <div class="faq">
         <h2>Frequently asked questions</h2>
-        <details><summary>How do I come up with a good social media username?</summary><p>Start with your niche (gaming, tech, beauty, etc), pick a vibe that matches your personality (cool, professional, funny), and combine them into 1-3 short words. Keep it under 15 characters for X/Twitter, under 30 for Instagram, and under 100 for YouTube.</p></details>
-        <details><summary>How do I check if a username is available?</summary><p>For Instagram, TikTok, X, and Twitch, just paste your generated handle into the platform's sign-up or search. For YouTube, the handle is the same as your channel name, so check on YouTube. For Discord, the username is separate from the display name.</p></details>
+        <details><summary>How do I come up with a good social media username?</summary><p>Start with your first name or nickname. Pick your niche (fashion, beauty, fitness, food, travel, art, music, photography, tech, gaming, comedy, education, lifestyle, or business). Combine the two with a common pattern: name + activity (cookingwithsam), name + niche word (miaskincare), mood + object (softbloom), or a small meaningful number (liv_04). Keep it under 15 characters for X, 24 for TikTok, 30 for Instagram.</p></details>
+        <details><summary>How do I check if a username is available?</summary><p>For Instagram, TikTok, X, and Twitch, paste your generated handle into the platform's sign-up or search. For YouTube, the handle is the same as your channel name, so check on YouTube. For Discord, the username is separate from the display name.</p></details>
         <details><summary>Can I use these names commercially?</summary><p>Yes - all generated names are provided for creative use. Note that the actual availability on each platform is determined by the platform's sign-up system, so always verify before launching your account or brand.</p></details>
-        <details><summary>Are these handles likely to be available?</summary><p>We generate uncommon combinations of niche-specific syllables and vibe modifiers, so most suggestions are likely available. We can't check every platform in real time, so the names show a "likely available" indicator based on uniqueness, not a live check.</p></details>
+        <details><summary>Are these handles likely to be available?</summary><p>We generate uncommon combinations of first names, activity verbs, niche keywords, mood adjectives, and aesthetic objects, so most suggestions are likely available. We can't check every platform in real time, so the names show a 'likely available' indicator based on uniqueness, not a live check.</p></details>
         <details><summary>What's the difference between a handle and a display name?</summary><p>The handle is your unique @username (no spaces, used in URLs and mentions). The display name is the readable name shown next to your posts. You usually set both, and they can be different versions of the same idea.</p></details>
         <details><summary>Should my Instagram handle match my TikTok handle?</summary><p>Yes, ideally. A consistent handle across platforms makes it easier for fans to find you everywhere. Use the <em>Surprise me</em> button until you find one you like, then register it on every platform you use.</p></details>
-        <details><summary>What's a good username for a private/personal account vs a public/creator account?</summary><p>For a personal account, lean into your own name or a nickname (e.g. <em>jane.dev</em> or <em>janedoe</em>). For a public creator account, lean into your niche + vibe so the handle communicates your content at a glance (e.g. <em>apexdev</em> for a tech channel).</p></details>
+        <details><summary>What's a good username for a private/personal account vs a public/creator account?</summary><p>For a personal account, lean into your own name or a nickname (e.g. <em>maya.r</em> or <em>max_22</em>). For a public creator account, lean into your niche + vibe so the handle communicates your content at a glance (e.g. <em>cookingwithsam</em> for a food channel).</p></details>
       </div>
     </article>
 
@@ -345,12 +550,17 @@ window.NF_HANDLE_DATA = ${dataJson};
 
 // =============================================================
 // build-handle.js (the generator engine for the handle page)
+//   - Template-based: each vibe has a list of {slot} patterns
+//   - Slots: {name}, {number}, {initial}, {adjective}, {object},
+//            {niche_word}, {activity}, {mood}
 // =============================================================
 function buildHandleJS() {
   return `/* handle.js
-   Generator for the social-handle page.
-   Reads NF_HANDLE_DATA (defined in the page) and produces names
-   from a niche + vibe + length + topic combo.
+   Realistic social-handle generator.
+   Uses first names, activity verbs, niche words, mood adjectives, and
+   aesthetic objects combined with platform-aware patterns. Generates
+   names that look like real Instagram, TikTok, YouTube, X, Twitch,
+   Discord, and GitHub handles.
 */
 (function () {
   "use strict";
@@ -358,9 +568,92 @@ function buildHandleJS() {
   const $ = (s) => document.querySelector(s);
 
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-  function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
-  function slug(s, sep) { return s.toLowerCase().replace(/[^a-z0-9]+/g, sep || ''); }
+  function initialOf(name) { return name ? name.charAt(0).toLowerCase() : ''; }
+  function lc(s) { return s ? s.toLowerCase() : s; }
+  function slug(s) { return lc(s).replace(/[^a-z0-9]+/g, ''); }
+  function trim(s, n) { return s ? s.slice(0, n) : s; }
 
+  // Find a word in a bank that fits within \`maxLen\` after slugging,
+  // and is at least 3 chars (filters out single letters like "r", "s", "j").
+  function pickFitting(bank, maxLen) {
+    for (let i = 0; i < 12; i++) {
+      const w = pick(bank);
+      const sw = slug(w);
+      if (sw.length >= 3 && sw.length <= maxLen) return w;
+    }
+    // Fallback: any word that slugs to at least 3 chars
+    for (let i = 0; i < 8; i++) {
+      const w = pick(bank);
+      if (slug(w).length >= 3) return w;
+    }
+    return '';
+  }
+
+  // Fill a {slot} template with a word from the matching bank
+  function fillSlot(slot, ctx) {
+    const d = ctx.data;
+    const niche = d.banks.niches[ctx.niche];
+    if (!niche) return '';
+    switch (slot) {
+      case 'name': {
+        // Use seed if provided, else use a name from the niche's first-name pool
+        if (ctx.seed) return slug(ctx.seed);
+        return pickFitting(niche.names, 10);
+      }
+      case 'initial':
+        return initialOf(ctx.seed || pick(niche.names));
+      case 'number':
+        return pick(d.banks.smallNums);
+      case 'adjective':
+        return pickFitting(niche.adjectives, 8);
+      case 'object':
+        // If user provided a topic, prefer to use it as object slot
+        if (ctx.topic) return slug(ctx.topic);
+        return pickFitting(niche.objects, 10);
+      case 'niche_word':
+        return pickFitting(niche.nicheWords, 10);
+      case 'activity':
+        return pickFitting(niche.activities, 10);
+      case 'mood':
+        return pickFitting(d.banks.moods, 6);
+      default:
+        return '';
+    }
+  }
+
+  // Apply the platform's separator style to a candidate string
+  function applySeparator(parts, platform, allowed, fallback) {
+    // \`parts\` is an array of words. We join them using a separator.
+    const sep = pick(allowed);
+    if (sep === ' ' || sep === 'space') {
+      return parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+    }
+    if (sep === 'dash' || sep === '-') {
+      return parts.join('-');
+    }
+    if (sep === 'either') {
+      // random between dot, underscore, nothing
+      const opts = ['.', '_', ''];
+      const chosen = pick(opts);
+      if (chosen === '') return parts.join('');
+      return parts.join(chosen);
+    }
+    return parts.join(sep);
+  }
+
+  // Pick a separator respecting Instagram's no-leading/trailing-dot rules
+  function pickSeparator(allowed, candidate) {
+    let sep = pick(allowed);
+    if (sep === '.' || sep === '_' || sep === '-') {
+      // Ensure we don't end or start with a separator
+      while (candidate.startsWith(sep) || candidate.endsWith(sep)) {
+        candidate = candidate.replace(new RegExp('^\\\\' + sep), '').replace(new RegExp('\\\\' + sep + '$'), '');
+      }
+    }
+    return candidate;
+  }
+
+  // Main build function
   function buildHandle() {
     const data = window.NF_HANDLE_DATA;
     if (!data) return [];
@@ -370,53 +663,77 @@ function buildHandleJS() {
     const vibe = $("#hf-vibe").value;
     const length = $("#hf-length").value;
     const topicRaw = ($("#hf-topic").value || "").trim();
-    const topic = topicRaw ? slug(topicRaw, '') : '';
+    const topic = topicRaw ? slug(topicRaw) : '';
+    const seedRaw = ($("#hf-seed").value || "").trim();
+    const seed = seedRaw ? slug(seedRaw) : '';
 
-    const n = data.banks.niches[niche];
     const v = data.banks.vibes[vibe];
-    if (!n || !v) return [];
+    const pMeta = data.banks.platforms[platform] || data.banks.platforms.generic;
+    if (!v) return [];
+
+    // Length -> target max length
+    const wantMax = length === 'short' ? 10 : (length === 'medium' ? 18 : 30);
+    const wantMin = length === 'short' ? 3 : (length === 'medium' ? 8 : 14);
+    const maxLen = Math.min(wantMax, pMeta.maxLen);
+
+    const ctx = { data, niche, vibe, topic, seed };
 
     const out = [];
     const seen = new Set();
     let safety = 0;
-    while (out.length < data.defaults.count && safety < data.defaults.count * 14) {
+    while (out.length < data.defaults.count && safety < data.defaults.count * 30) {
       safety++;
-      const parts = [];
-      // Vibe prefix ~50% of the time
-      if (v.prefix && v.prefix.length && Math.random() > 0.45) {
-        parts.push(pick(v.prefix));
+      const pattern = pick(v.patterns);
+      // Fill each slot, slugging each one individually so the literal separator in the template survives
+      const filled = pattern.replace(/\\{([a-z_]+)\\}/g, (m, slot) => {
+        const w = fillSlot(slot, ctx);
+        return slug(w);
+      });
+      if (!filled) continue;
+
+      let candidate = filled;
+
+      // Platform-specific separator handling
+      if (platform === 'youtube') {
+        // Replace . _ - with spaces, then title-case each word
+        candidate = candidate.replace(/[._-]+/g, ' ').trim();
+        candidate = candidate.split(/\\s+/).filter(Boolean).map(function (w) {
+          return w.charAt(0).toUpperCase() + w.slice(1);
+        }).join(' ');
+      } else if (platform === 'github') {
+        // Convert . and _ to -
+        candidate = candidate.replace(/\\./g, '-').replace(/_/g, '-');
+        candidate = candidate.replace(/-{2,}/g, '-');
+      } else if (platform === 'x' || platform === 'twitch' || platform === 'discord') {
+        // Strip dots and underscores (X/Twitch/Discord don't allow them)
+        candidate = candidate.replace(/[._]/g, '');
       }
-      parts.push(pick(n.words));
-      // Length: short = 1, medium = 2, long = 3
-      const wantN = length === 'short' ? 1 : (length === 'medium' ? 2 : 3);
-      while (parts.length < wantN) parts.push(pick(n.suffixes));
-      // Topic slot: insert with low probability
-      if (topic && Math.random() > 0.55) {
-        const insertAt = Math.min(parts.length - 1, 1);
-        parts.splice(insertAt, 0, topic);
-      }
-      // Format for platform
-      const pMeta = data.banks.platforms[platform] || data.banks.platforms.generic;
-      const sep = pMeta.separator;
-      let candidate;
-      if (sep === ' ') {
-        // Capitalize each word for YouTube style
-        candidate = parts.map(cap).join(' ');
-      } else {
-        candidate = parts.map(p => slug(p, sep)).join(sep);
-      }
-      // Enforce max length
-      if (candidate.length > pMeta.maxLen) candidate = candidate.slice(0, pMeta.maxLen);
-      if (!seen.has(candidate.toLowerCase()) && candidate.length >= 3) {
-        seen.add(candidate.toLowerCase());
-        out.push(candidate);
-      }
+      // IG, TikTok, generic: keep as-is
+
+      // Trim to max length
+      if (candidate.length > maxLen) candidate = candidate.slice(0, maxLen);
+
+      // Strip leading/trailing separators
+      candidate = candidate.replace(/^[._-]+/, '').replace(/[._-]+$/, '');
+      // Collapse double separators
+      candidate = candidate.replace(/[._-]{2,}/g, '.');
+      // Re-strip any new edge separators after collapsing
+      candidate = candidate.replace(/^[._-]+/, '').replace(/[._-]+$/, '');
+
+      // Min length check
+      if (length === 'short' && candidate.length < wantMin) continue;
+      if (candidate.length < 3) continue;
+
+      if (seen.has(candidate.toLowerCase())) continue;
+      seen.add(candidate.toLowerCase());
+      out.push(candidate);
     }
     return out;
   }
 
+  // For YouTube, the engine already produces "Title Case With Spaces" so we
+  // just return as-is. For other platforms, return as-is.
   function formatFor(name, platform) {
-    if (platform === 'youtube') return name.replace(/(^|\\s)\\w/g, m => m.toUpperCase());
     return name;
   }
 
@@ -425,7 +742,7 @@ function buildHandleJS() {
     if (!grid) return;
     grid.innerHTML = "";
     if (!names.length) {
-      grid.innerHTML = '<p class="muted">No handles yet. Fill the form and hit Generate.</p>';
+      grid.innerHTML = '<p class="muted">No handles yet. Try a different niche, vibe, or length and hit Generate again.</p>';
       return;
     }
     const platform = $("#hf-platform").value;
@@ -487,6 +804,8 @@ function buildHandleJS() {
         $("#hf-niche").value = niches[Math.floor(Math.random() * niches.length)];
         $("#hf-vibe").value = vibes[Math.floor(Math.random() * vibes.length)];
         $("#hf-length").value = lengths[Math.floor(Math.random() * lengths.length)];
+        $("#hf-topic").value = "";
+        $("#hf-seed").value = "";
         renderResults(buildHandle());
       });
     }
@@ -564,7 +883,7 @@ function appendHandleCSS() {
 }
 
 // =============================================================
-// build SEO content page
+// build SEO content page (shared by best-gaming-names + instagram)
 // =============================================================
 function buildSEOPage(opts) {
   const { slug, title, metaDesc, h1, intro, sections, faqs, relatedLinks, jsonLd } = opts;
@@ -755,7 +1074,8 @@ function buildBestGamingNames() {
       {
         h2: "How to pick a good gaming name",
         body: `<p>A great gamertag has four traits: it's <strong>short</strong> (under 12 characters reads well in any UI), <strong>memorable</strong> (one sharp word is better than three forgettable ones), <strong>pronounceable</strong> (your squad needs to be able to call it out in clutch), and <strong>genre-appropriate</strong> (a name that fits the game you're playing most). Avoid numbers and underscores when you can - they date your account and look like a placeholder.</p>
-        <p>Need a custom one? Our <a href="gamertag-generator.html">free gamertag generator</a> combines 100+ prefixes (Shadow, Void, Iron, Storm, etc.) with 80+ suffixes (Slayer, Hunter, Reaper, etc.) to produce tens of thousands of unique combinations. Pick your vibe, hit generate, and you have 10 fresh ideas in under a second.</p>`
+        <p>Need a custom one? Our <a href="gamertag-generator.html">free gamertag generator</a> combines 100+ prefixes (Shadow, Void, Iron, Storm, etc.) with 80+ suffixes (Slayer, Hunter, Reaper, etc.) to produce tens of thousands of unique combinations. Pick your vibe, hit generate, and you have 10 fresh ideas in under a second.</p>
+        <p>For real-name style handles (like <em>liv_04</em> or <em>cookingwithsam</em>) that work on Twitch, YouTube, and Discord, use our <a href="handle-generator.html">social handle generator</a> - it uses first-name pools and the patterns real creators actually pick.</p>`
       },
       {
         h2: "How to change your gamertag in 2026",
@@ -774,7 +1094,7 @@ function buildBestGamingNames() {
       { q: "What's a good gamertag?", a: "Short, memorable, pronounceable, and genre-appropriate. Aim for under 12 characters with one sharp word. Avoid numbers and underscores when possible." },
       { q: "How do I come up with a cool gamertag?", a: "Pick a vibe (cool, funny, edgy, anime) and a genre (fantasy, sci-fi, modern, horror). Combine one short word from each. Our gamertag generator does this for you - it produces 10 unique combinations in under a second." },
       { q: "Can I use the same gamertag on every platform?", a: "Often, but not always. Steam, Xbox, PlayStation, and Riot all have their own name spaces. Check availability on each platform after you find one you like." },
-      { q: "Should my gamertag match my Twitch / YouTube name?", a: "Ideally yes - consistency makes it easier for fans to find you. Secure the name on every platform you stream on, even if you don't use them all yet." },
+      { q: "Should my gamertag match my Twitch / YouTube name?", a: "Ideally yes - consistency makes it easier for fans to find you. Secure the name on every platform you stream on, even if you don't use them all yet. For real-name style handles, try our social handle generator which produces names people actually use on Twitch, YouTube, and Discord." },
       { q: "Can I change my gamertag later?", a: "Most platforms let you change, usually for a small fee (Xbox $9.99, PSN $4.99, Steam $5). So don't stress too much - but picking a good one upfront saves money." }
     ],
     relatedLinks: [
@@ -803,20 +1123,22 @@ function buildBestGamingNames() {
 
 // =============================================================
 // Build "Instagram Username Ideas" page
+//   All 60+ examples are now in the realistic-handle style:
+//   first names, names + activities, mood + object, etc.
 // =============================================================
 function buildInstagramUsernameIdeas() {
   return buildSEOPage({
     slug: "instagram-username-ideas",
     title: "Instagram Username Ideas That Are Actually Available (2026)",
-    metaDesc: "Looking for Instagram username ideas that are actually available? Browse 60+ creative username ideas by niche, get our free Instagram username generator, and learn the rules Instagram uses for username availability.",
+    metaDesc: "Looking for Instagram username ideas that are actually available? Browse 80+ realistic Instagram username examples by niche - first name + activity, mood + object, the / by / hey / its + name - plus a free Instagram username generator.",
     h1: "Instagram Username Ideas That Are Actually Available",
-    intro: "60+ Instagram username ideas organized by niche, with a free generator that produces custom usernames for your account. Plus the rules Instagram uses for availability, and how to claim the name across platforms before someone else does.",
+    intro: "80+ realistic Instagram username examples organized by niche, with a free generator that produces custom usernames using the patterns real creators actually pick. Plus the rules Instagram uses for availability, and how to claim the name across platforms before someone else does.",
     sections: [
       {
         h2: "The Instagram username rules (2026)",
         body: `<p>Before picking a username, know what Instagram allows:</p>
         <ul>
-        <li><strong>Length:</strong> 30 characters max, 2 characters min. The sweet spot for memorability is 8 to 15 characters.</li>
+        <li><strong>Length:</strong> 1 to 30 characters. The sweet spot for memorability is 8 to 15 characters.</li>
         <li><strong>Characters:</strong> Letters, numbers, periods, and underscores. No spaces, no hyphens, no special characters.</li>
         <li><strong>Uniqueness:</strong> Globally unique. If you want a name, you have to claim it before someone else does.</li>
         <li><strong>Periods and underscores don't make a name unique.</strong> <code>jane.doe</code>, <code>jane_doe</code>, and <code>janedoe</code> are all considered the same handle by Instagram's system.</li>
@@ -824,67 +1146,115 @@ function buildInstagramUsernameIdeas() {
         </ul>`
       },
       {
-        h2: "60 Instagram username ideas by niche",
-        body: `<p>Pick the category that matches your content, then run the free <a href="handle-generator.html">Instagram username generator</a> for 12 custom ideas based on your vibe.</p>
-
-        <h3>Fashion and style</h3>
+        h2: "How real Instagram handles are named (the 6 patterns)",
+        body: `<p>After looking at thousands of real Instagram accounts, the patterns collapse to six templates:</p>
+        <ol>
+        <li><strong>First name + activity or niche word</strong> - <em>cookingwithsam</em>, <em>miaskincare</em>, <em>jessrunssf</em>. The most common creator pattern. Uses your first name so fans can find you, plus a keyword that signals your content.</li>
+        <li><strong>Name + small meaningful number</strong> - <em>liv_04</em>, <em>maya.22</em>, <em>max_95</em>. Personal accounts do this. The number is usually a birth year, lucky number, or just a number they like. Avoid random number strings like <em>emma57831</em> - they look like a bot.</li>
+        <li><strong>First name + last initial</strong> - <em>jessica.r</em>, <em>sarah.m</em>, <em>luke.k</em>. Personal accounts where you want your real name but the full last name is taken.</li>
+        <li><strong>the / hey / its / by / get / try + name</strong> - <em>thebrandname</em>, <em>heymia</em>, <em>itsmax</em>, <em>bynora</em>, <em>getgrowth</em>, <em>trycreate</em>. Brand and creator accounts. Reads as a voice.</li>
+        <li><strong>Mood + aesthetic object</strong> - <em>softbloom</em>, <em>velvetdawn</em>, <em>goldenhour</em>, <em>quietcloud</em>. Aesthetic, lifestyle, photography, art. No first name. Just a feeling and a thing.</li>
+        <li><strong>One short, hard word</strong> - <em>vex</em>, <em>nyx</em>, <em>flux</em>, <em>kai</em>, <em>onyx</em>, <em>ember</em>. The minimalist move. Four to six letters. The hardest to get because everyone wants them.</li>
+        </ol>
+        <p>Our <a href="handle-generator.html">free Instagram username generator</a> uses all six patterns, plus 14 niche categories and 8 vibe styles, to produce 12 custom names per generation.</p>`
+      },
+      {
+        h2: "Fashion and style Instagram username ideas",
+        body: `<p>Real fashion creators use first names + closet words. The cleanest pattern: <em>{name}{closet word}</em>.</p>
         <ul>
-        <li><span class="example-name">velvetluxe</span>, <span class="example-name">ivorymode</span>, <span class="example-name">goldcouture</span>, <span class="example-name">silkatelier</span>, <span class="example-name">noirstyle</span>, <span class="example-name">pearlvogue</span></li>
+        <li><span class="example-name">mialinen</span>, <span class="example-name">maya.denim</span>, <span class="example-name">sofiawool</span>, <span class="example-name">ivycashmere</span>, <span class="example-name">nora.silk</span>, <span class="example-name">ariafits</span>, <span class="example-name">chloethreads</span>, <span class="example-name">elladrapes</span>, <span class="example-name">lunawears</span>, <span class="example-name">rosiestyles</span></li>
         </ul>
-
-        <h3>Beauty and skincare</h3>
+        <h3>Minimal fashion (one mood + object)</h3>
         <ul>
-        <li><span class="example-name">glowritual</span>, <span class="example-name">silkpetal</span>, <span class="example-name">rosebloom</span>, <span class="example-name">dewskin</span>, <span class="example-name">blushbar</span>, <span class="example-name">lushedit</span></li>
+        <li><span class="example-name">softsilk</span>, <span class="example-name">rawlinen</span>, <span class="example-name">quietvelvet</span>, <span class="example-name">wildcotton</span>, <span class="example-name">puredenim</span>, <span class="example-name">slowwool</span></li>
+        </ul>`
+      },
+      {
+        h2: "Beauty and skincare Instagram username ideas",
+        body: `<p>Beauty creators lean into the <em>{name}{skin word}</em> pattern. The skin words are real terms people search.</p>
+        <ul>
+        <li><span class="example-name">miaglow</span>, <span class="example-name">maya.skin</span>, <span class="example-name">sofiaroutine</span>, <span class="example-name">ellashimmer</span>, <span class="example-name">norabalances</span>, <span class="example-name">ariabalances</span>, <span class="example-name">chloeritual</span>, <span class="example-name">lunamoisturizes</span>, <span class="example-name">rubyglows</span>, <span class="example-name">opal.skin</span></li>
         </ul>
-
-        <h3>Fitness and wellness</h3>
+        <h3>Beauty aesthetic (mood + glow word)</h3>
         <ul>
-        <li><span class="example-name">ironbeast</span>, <span class="example-name">peakmode</span>, <span class="example-name">grindfits</span>, <span class="example-name">forceflex</span>, <span class="example-name">liftdaily</span>, <span class="example-name">pulseathlete</span></li>
+        <li><span class="example-name">dewyaura</span>, <span class="example-name">softflushed</span>, <span class="example-name">quietgloss</span>, <span class="example-name">calm.skin</span>, <span class="example-name">glassyritual</span>, <span class="example-name">gloss.diary</span></li>
+        </ul>`
+      },
+      {
+        h2: "Fitness and wellness Instagram username ideas",
+        body: `<p>Fitness handles usually start with the person's first name + a verb like lifts, runs, or trains.</p>
+        <ul>
+        <li><span class="example-name">maxlifts</span>, <span class="example-name">kaitrains</span>, <span class="example-name">jayruns</span>, <span class="example-name">lev.climbs</span>, <span class="example-name">zanesweats</span>, <span class="example-name">rio.builds</span>, <span class="example-name">ashstretches</span>, <span class="example-name">noahcoaches</span>, <span class="example-name">ezra.mobility</span>, <span class="example-name">theorowes</span></li>
         </ul>
-
-        <h3>Food and cooking</h3>
+        <h3>Fitness aesthetic (mood + action)</h3>
         <ul>
-        <li><span class="example-name">savorkitchen</span>, <span class="example-name">spicefeast</span>, <span class="example-name">freshplate</span>, <span class="example-name">basilbites</span>, <span class="example-name">emberchef</span>, <span class="example-name">noodletales</span></li>
+        <li><span class="example-name">slowlift</span>, <span class="example-name">quietgrind</span>, <span class="example-name">softsweat</span>, <span class="example-name">calm.rep</span>, <span class="example-name">rawmile</span>, <span class="example-name">justlift</span></li>
+        </ul>`
+      },
+      {
+        h2: "Food and cooking Instagram username ideas",
+        body: `<p>Food creators use the <em>{name}{kitchen verb}</em> pattern or the <em>{name}{cuisine}</em> pattern.</p>
+        <ul>
+        <li><span class="example-name">sambakes</span>, <span class="example-name">tomcooks</span>, <span class="example-name">mayacooks</span>, <span class="example-name">nora.sips</span>, <span class="example-name">lenaeats</span>, <span class="example-name">ariabakes</span>, <span class="example-name">sofiakitchen</span>, <span class="example-name">miakneads</span>, <span class="example-name">ellaplate</span>, <span class="example-name">sagecooks</span></li>
         </ul>
-
-        <h3>Travel</h3>
+        <h3>Food with first name + cuisine</h3>
         <ul>
-        <li><span class="example-name">wanderatlas</span>, <span class="example-name">nomadcompass</span>, <span class="example-name">roamvoyage</span>, <span class="example-name">beyondtrails</span>, <span class="example-name">driftglobe</span>, <span class="example-name">sojournmap</span></li>
+        <li><span class="example-name">maya.sourdough</span>, <span class="example-name">sofiaramen</span>, <span class="example-name">chloepasta</span>, <span class="example-name">jessmatcha</span>, <span class="example-name">livbakery</span>, <span class="example-name">nora.ferments</span></li>
         </ul>
-
-        <h3>Art and design</h3>
+        <h3>Food aesthetic</h3>
         <ul>
-        <li><span class="example-name">inkstudio</span>, <span class="example-name">brushatelier</span>, <span class="example-name">huepalette</span>, <span class="example-name">canvasdaily</span>, <span class="example-name">drawnedit</span>, <span class="example-name">sketchmuse</span></li>
+        <li><span class="example-name">softsourdough</span>, <span class="example-name">quietkitchen</span>, <span class="example-name">slowoven</span>, <span class="example-name">calmplate</span>, <span class="example-name">wildbread</span>, <span class="example-name">pure.broth</span></li>
+        </ul>`
+      },
+      {
+        h2: "Travel Instagram username ideas",
+        body: `<p>Travel handles are almost always first name + travel verb or location.</p>
+        <ul>
+        <li><span class="example-name">samtravels</span>, <span class="example-name">tomwanders</span>, <span class="example-name">mayaroams</span>, <span class="example-name">nora.explores</span>, <span class="example-name">lenatravels</span>, <span class="example-name">ariaroams</span>, <span class="example-name">sofiawanders</span>, <span class="example-name">miatreks</span>, <span class="example-name">ellajourneys</span>, <span class="example-name">sagewanders</span></li>
         </ul>
-
-        <h3>Photography</h3>
+        <h3>Travel aesthetic</h3>
         <ul>
-        <li><span class="example-name">aperturedaily</span>, <span class="example-name">focaledit</span>, <span class="example-name">exposureframe</span>, <span class="example-name">shutterpoem</span>, <span class="example-name">framelight</span>, <span class="example-name">lensandline</span></li>
+        <li><span class="example-name">slowpassport</span>, <span class="example-name">quietcompass</span>, <span class="example-name">softatlas</span>, <span class="example-name">calm.trail</span>, <span class="example-name">wildpassport</span>, <span class="example-name">rawhorizon</span></li>
+        </ul>`
+      },
+      {
+        h2: "Art, photography, and music Instagram username ideas",
+        body: `<p>Creator accounts for visual and audio work lean on mood + object. The aesthetic handles the visual brand.</p>
+        <ul>
+        <li><span class="example-name">mayadraws</span>, <span class="example-name">nora.paints</span>, <span class="example-name">lenacrafts</span>, <span class="example-name">ariainks</span>, <span class="example-name">sofiasketches</span>, <span class="example-name">miapaints</span>, <span class="example-name">ellatextures</span>, <span class="example-name">sageprints</span></li>
         </ul>
-
-        <h3>Music</h3>
+        <h3>Photography handles</h3>
         <ul>
-        <li><span class="example-name">bassmode</span>, <span class="example-name">lofiwave</span>, <span class="example-name">soundedit</span>, <span class="example-name">mixandmuse</span>, <span class="example-name">treblekid</span>, <span class="example-name">echoviolet</span></li>
+        <li><span class="example-name">maxshoots</span>, <span class="example-name">kai.frames</span>, <span class="example-name">levcaptures</span>, <span class="example-name">zaneprints</span>, <span class="example-name">rioshootsfilm</span>, <span class="example-name">ash.develops</span></li>
         </ul>
-
-        <h3>Gaming</h3>
+        <h3>Music handles</h3>
         <ul>
-        <li><span class="example-name">shadowmancer</span>, <span class="example-name">voidwalker</span>, <span class="example-name">xraven</span>, <span class="example-name">grimzero</span>, <span class="example-name">runehex</span>, <span class="example-name">apexdoom</span></li>
+        <li><span class="example-name">maxplays</span>, <span class="example-name">kaimixes</span>, <span class="example-name">levproduces</span>, <span class="example-name">zanebeats</span>, <span class="example-name">riosings</span>, <span class="example-name">ashsamples</span></li>
         </ul>
-
-        <h3>Tech and coding</h3>
+        <h3>Aesthetic art / photo / music</h3>
         <ul>
-        <li><span class="example-name">pixelhub</span>, <span class="example-name">bytelab</span>, <span class="example-name">apexdev</span>, <span class="example-name">codecore</span>, <span class="example-name">stackmode</span>, <span class="example-name">kernelkid</span></li>
+        <li><span class="example-name">softcanvas</span>, <span class="example-name">quietsketch</span>, <span class="example-name">wildgrain</span>, <span class="example-name">rawlight</span>, <span class="example-name">calm.synth</span>, <span class="example-name">lowkeywave</span></li>
+        </ul>`
+      },
+      {
+        h2: "Tech and coding Instagram username ideas",
+        body: `<p>Tech creators use first name + dev word or just the dev word. Short, no fluff.</p>
+        <ul>
+        <li><span class="example-name">maxcodes</span>, <span class="example-name">kaibuilds</span>, <span class="example-name">levships</span>, <span class="example-name">zanedev</span>, <span class="example-name">riobuilds</span>, <span class="example-name">ashmakes</span>, <span class="example-name">noahdebugs</span>, <span class="example-name">ezra.engineer</span>, <span class="example-name">theodev</span>, <span class="example-name">remy.stacks</span></li>
         </ul>
-
-        <h3>Lifestyle and daily</h3>
+        <h3>Tech aesthetic</h3>
         <ul>
-        <li><span class="example-name">slowvibes</span>, <span class="example-name">cozymode</span>, <span class="example-name">softdaily</span>, <span class="example-name">mindfullight</span>, <span class="example-name">sunnyhours</span>, <span class="example-name">quietsoul</span></li>
-        </ul>
-
-        <h3>Business and creator</h3>
+        <li><span class="example-name">quietstack</span>, <span class="example-name">slowcode</span>, <span class="example-name">calm.dev</span>, <span class="example-name">rawbuild</span>, <span class="example-name">cleantech</span>, <span class="example-name">shipdaily</span></li>
+        </ul>`
+      },
+      {
+        h2: "Gaming, lifestyle, business, and one-word handles",
+        body: `<p>For gaming, lifestyle, business, and minimalist accounts, here are 40+ more in the same real-name style.</p>
         <ul>
-        <li><span class="example-name">founderco</span>, <span class="example-name">growthcapital</span>, <span class="example-name">strategylab</span>, <span class="example-name">brandmode</span>, <span class="example-name">leadandgrow</span>, <span class="example-name">scalehq</span></li>
+        <li><span class="example-name">maxplays</span>, <span class="example-name">kaispeedruns</span>, <span class="example-name">levqueues</span>, <span class="example-name">zanestream</span>, <span class="example-name">rioclutches</span>, <span class="example-name">ashgrinds</span>, <span class="example-name">noahlobbies</span>, <span class="example-name">ezra.carries</span></li>
+        <li><span class="example-name">mayalives</span>, <span class="example-name">nora.slows</span>, <span class="example-name">lenamornings</span>, <span class="example-name">ariadaily</span>, <span class="example-name">sofiareads</span>, <span class="example-name">miajournals</span>, <span class="example-name">ellabreathes</span>, <span class="example-name">sagepractices</span></li>
+        <li><span class="example-name">maxfounds</span>, <span class="example-name">kaibuilds</span>, <span class="example-name">levleads</span>, <span class="example-name">zaneships</span>, <span class="example-name">riogrows</span>, <span class="example-name">ashscales</span>, <span class="example-name">noahsells</span>, <span class="example-name">ezrapartners</span></li>
+        <li><span class="example-name">vex</span>, <span class="example-name">nyx</span>, <span class="example-name">flux</span>, <span class="example-name">kai</span>, <span class="example-name">onyx</span>, <span class="example-name">ember</span>, <span class="example-name">wren</span>, <span class="example-name">june</span>, <span class="example-name">sage</span>, <span class="example-name">lou</span>, <span class="example-name">faye</span>, <span class="example-name">gem</span>, <span class="example-name">cleo</span>, <span class="example-name">nova</span>, <span class="example-name">liv</span>, <span class="example-name">ada</span></li>
         </ul>`
       },
       {
@@ -895,34 +1265,34 @@ function buildInstagramUsernameIdeas() {
       {
         h2: "Should your Instagram handle match your TikTok and YouTube?",
         body: `<p>Yes, in 99% of cases. A consistent handle across platforms makes it dramatically easier for new fans to find you everywhere. Imagine someone watches your TikTok, types your handle into Instagram, and finds you instantly. The reverse is also true. If your handle is different on every platform, you lose some of those searches to people who gave up and followed a competitor instead.</p>
-        <p>The exception: if your Instagram handle is taken but the same name is free on YouTube, you have three options. (1) Pick a close variation everywhere, like <code>@velvetluxe</code> on Instagram and <code>@velvetluxe.co</code> on YouTube. (2) Use a different handle on Instagram and add a "link in bio" to your YouTube on the Instagram profile. (3) Pick a completely new name that is free everywhere, and lose the older audience for the sake of consistency.</p>`
+        <p>The exception: if your Instagram handle is taken but the same name is free on YouTube, you have three options. (1) Pick a close variation everywhere, like <code>@cookingwithsam</code> on YouTube and <code>@samcooks</code> on Instagram. (2) Use a different handle on Instagram and add a "link in bio" to your YouTube on the Instagram profile. (3) Pick a completely new name that is free everywhere, and lose the older audience for the sake of consistency.</p>`
       },
       {
         h2: "Display name vs. username: what's the difference?",
         body: `<p>Your <strong>username</strong> is the unique handle that appears in your profile URL and in mentions. It's the part after the <code>@</code> and it's globally unique on Instagram. Your <strong>display name</strong> is the readable name shown at the top of your profile, next to your posts in the feed, and in your comments. It doesn't need to be unique and you can change it any time.</p>
-        <p>A common pattern: use a short, brandable handle (<code>@velvetluxe</code>) and a longer, descriptive display name (<code>Velvet Luxe | Sustainable Style</code>). The handle is for tagging and searching, the display name is for first impressions.</p>`
+        <p>A common pattern: use a short, brandable handle (<code>@cookingwithsam</code>) and a longer, descriptive display name (<code>Sam | Sourdough &amp; slow cooking</code>). The handle is for tagging and searching, the display name is for first impressions.</p>`
       },
       {
         h2: "Names to avoid on Instagram",
         body: `<ul>
-        <li><strong>Numbers that look like dates:</strong> <code>@jenny1995</code> is fine for a personal account, but reads weird for a brand.</li>
-        <li><strong>Underscores at the start or end:</strong> Looks like a placeholder. <code>@_velvet</code> is a worse choice than <code>@velvet</code>.</li>
+        <li><strong>Numbers that look like bot strings:</strong> <code>@emma57831</code> looks like a bot or a default account. Use a meaningful number instead: birth year, lucky number, single digit.</li>
+        <li><strong>Underscores at the start or end:</strong> Looks like a placeholder. <code>_velvet</code> is a worse choice than <code>@velvet</code>.</li>
         <li><strong>Long compound words without separators:</strong> <code>@ilovefashionforever</code> is hard to read. <code>@ilovefashionforever</code> doesn't help. Use periods: <code>@i.love.fashion</code>.</li>
         <li><strong>Brand names you don't own:</strong> If your handle is <code>@nike_fan_official</code>, you're one trademark complaint away from losing it. Don't use brand names.</li>
         <li><strong>Hard-to-spell words:</strong> If you have to spell it out loud three times, it's not the right name. The easier you are to find, the more followers you'll get from word-of-mouth.</li>
         </ul>`
       },
       {
-        h2: "Get a custom Instagram username idea in 2 seconds",
-        body: `<p>Open the <a href="handle-generator.html">free Instagram username generator</a>, pick "Instagram" as the platform, choose your niche (fashion, beauty, fitness, food, travel, art, music, gaming, tech, lifestyle, business), pick a vibe (cool, professional, funny, mysterious, cute, edgy, chill, luxury), and hit <strong>Generate handles</strong>. You get 12 custom username ideas built from a 200+ word bank of niche-relevant syllables crossed with vibe modifiers. Copy the one you like, paste it into Instagram, and see if it's available. If not, hit generate again for 12 fresh ones.</p>`
+        h2: "Get a custom Instagram username in 2 seconds",
+        body: `<p>Open the <a href="handle-generator.html">free Instagram username generator</a>, pick "Instagram" as the platform, choose your niche (fashion, beauty, fitness, food, travel, art, music, photography, tech, gaming, comedy, education, lifestyle, or business), pick a vibe (cool, professional, funny, mysterious, cute, edgy, chill, or luxury), and hit <strong>Generate handles</strong>. You get 12 custom username ideas built from a 200+ word bank of first names, activity verbs, niche keywords, mood adjectives, and aesthetic objects. Copy the one you like, paste it into Instagram, and see if it's available. If not, hit generate again for 12 fresh ones.</p>`
       }
     ],
     faqs: [
       { q: "How long can an Instagram username be?", a: "Instagram usernames can be 2 to 30 characters. The sweet spot for memorability and shareability is 8 to 15 characters. Shorter is better, but don't sacrifice meaning to save a character." },
-      { q: "Can Instagram usernames have periods and underscores?", a: "Yes, both. But Instagram treats jane.doe, jane_doe, and janedoe as the same handle, so you can't claim multiple variations of the same name. Pick one separator and stick with it." },
+      { q: "Can Instagram usernames have periods and underscores?", a: "Yes, both. But Instagram treats jane.doe, jane_doe, and janedoe as the same handle, so you can't claim multiple variations of the same name. Pick one separator and stick with it. Most modern Instagram handles use periods, since they read softer than underscores." },
       { q: "How often can I change my Instagram username?", a: "You can change your Instagram username, but there's a 14-day cooldown between changes. So don't pick a name you'll regret. Also note that your old username becomes available for someone else to claim the moment you change it." },
       { q: "What if my Instagram handle is taken on a dead account?", a: "There's no public process to claim a handle from an inactive account. You can report the account to Instagram for impersonation if it's actually pretending to be you or your brand, but if it's just a dormant account that happens to have your name, you'll need to pick a different name." },
-      { q: "Should I use my real name on Instagram?", a: "For personal accounts, yes. Your real name (or a close variation like first initial + last name) is the most discoverable choice. For creator or brand accounts, use a niche + vibe handle so the name communicates your content at a glance." }
+      { q: "Should I use my real name on Instagram?", a: "For personal accounts, yes. Your real name (or a close variation like first initial + last name) is the most discoverable choice. For creator or brand accounts, use a niche + first name handle so the name communicates your content at a glance (e.g. cookingwithsam for a food channel)." }
     ],
     relatedLinks: [
       { href: "handle-generator.html", label: "Social Handle Generator" },
@@ -939,7 +1309,7 @@ function buildInstagramUsernameIdeas() {
       "@context": "https://schema.org",
       "@type": "Article",
       "headline": "Instagram Username Ideas That Are Actually Available (2026)",
-      "description": "60+ Instagram username ideas by niche, plus a free generator and the rules Instagram uses for availability.",
+      "description": "80+ realistic Instagram username ideas by niche, plus a free generator using the patterns real creators actually pick.",
       "author": { "@type": "Organization", "name": "NameSwift" },
       "publisher": { "@type": "Organization", "name": "NameSwift", "url": "https://nameswiftgenerator.com" },
       "datePublished": "2026-08-22",
@@ -959,7 +1329,7 @@ function updateHomepage() {
   const newTile = `      <a class="gen-tile" href="handle-generator.html">
         <div class="gen-emoji">&#128221;</div>
         <h3>Social Handle Generator</h3>
-        <p>Quiz-style generator for Instagram, YouTube, TikTok, X, Twitch, Discord, GitHub. 13 niches, 8 vibes.</p>
+        <p>Realistic social media username ideas for Instagram, YouTube, TikTok, X, Twitch, Discord, GitHub. 14 niches, 8 vibes.</p>
       </a>
       <a class="gen-tile" href="best-gaming-names.html">
         <div class="gen-emoji">&#127918;</div>
@@ -969,7 +1339,7 @@ function updateHomepage() {
       <a class="gen-tile" href="instagram-username-ideas.html">
         <div class="gen-emoji">&#128247;</div>
         <h3>Instagram Username Ideas</h3>
-        <p>60+ creative Instagram handle ideas by niche, plus the rules Instagram uses for availability.</p>
+        <p>80+ realistic Instagram handle ideas by niche, plus the rules Instagram uses for availability.</p>
       </a>
 `;
 
@@ -985,9 +1355,6 @@ function updateHomepage() {
       }
     }
   }
-
-  // 2) Add a link to handle-generator in the in-content cross-link block (if one exists)
-  // We don't have an obvious in-content block in index.html, so we leave the homepage nav alone.
 
   fs.writeFileSync(indexPath, html);
 }
@@ -1016,7 +1383,6 @@ function updateSitemap() {
     <priority>${u.priority}</priority>
   </url>
 `;
-      // Insert before </urlset>
       xml = xml.replace('</urlset>', entry + '</urlset>');
       changed = true;
     }
@@ -1048,7 +1414,7 @@ function main() {
   fs.writeFileSync(path.join(jsDir, 'handle.js'), handleJS);
   console.log('[write] assets/js/handle.js (' + handleJS.length + ' bytes)');
 
-  // 3) Append CSS for the handle form
+  // 3) Append CSS for the handle form (idempotent)
   const cssChanged = appendHandleCSS();
   console.log('[css] appended handle form CSS: ' + (cssChanged ? 'yes' : 'already present'));
 
