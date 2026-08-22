@@ -1084,3 +1084,42 @@ html[data-theme="light"] body::after {
   text-shadow: 0 0 6px rgba(0,0,0,0.4);
   z-index: 2;
 }
+
+/* ====== Cleaner ad placeholder (replaces debug-y ad-slot) ====== */
+.ad-placeholder {
+  margin: 28px 0;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-align: center;
+  color: var(--text-mute);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--bg-elev) 50%, transparent);
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ad-placeholder::before {
+  content: "";
+}
+.ad-placeholder .ad-placeholder-label {
+  display: inline-block;
+  padding: 4px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  color: var(--text-dim);
+}
+
+/* ====== Spotlight visual examples label ====== */
+.spotlight-visual-label {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  margin-bottom: 2px;
+}
