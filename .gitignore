@@ -37,3 +37,8 @@ nameforge_deploy*
 # Local config
 .env
 .env.local
+
+# Build/utility scripts (not deployed)
+build-handle-*.js.bak
+domain.js
+debug.js
